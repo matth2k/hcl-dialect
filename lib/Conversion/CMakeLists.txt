@@ -7,6 +7,7 @@ get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
 
 add_mlir_dialect_library(MLIRHCLConversion
     ${globbed}
+    HCLToCore.cpp
 
     ADDITIONAL_HEADER_DIRS
     ${PROJECT_SOURCE_DIR}/include/hcl

@@ -13,6 +13,11 @@ def HCLToLLVMLowering : Pass<"hcl-lower-to-llvm", "ModuleOp"> {
   let constructor = "mlir::hcl::createHCLToLLVMLoweringPass()";
 }
 
+def HCLToCoreLowering : Pass<"hcl-lower-to-core", "ModuleOp"> {
+  let summary = "HCL to core MLIR dialects conversion pass";
+  let constructor = "mlir::hcl::createHCLToCoreLoweringPass()";
+}
+
 def FixedToInteger : Pass<"fixed-to-integer", "ModuleOp"> {
   let summary = "Fixed-point operations to integer";
   let constructor = "mlir::hcl::createFixedPointToIntegerPass()";

@@ -17,12 +17,14 @@ namespace hcl {
 
 // HeteroCL Dialect -> LLVM Dialect
 std::unique_ptr<OperationPass<ModuleOp>> createHCLToLLVMLoweringPass();
+std::unique_ptr<OperationPass<ModuleOp>> createHCLToCoreLoweringPass();
 std::unique_ptr<OperationPass<ModuleOp>> createFixedPointToIntegerPass();
 std::unique_ptr<OperationPass<ModuleOp>> createLowerCompositeTypePass();
 std::unique_ptr<OperationPass<ModuleOp>> createLowerBitOpsPass();
 std::unique_ptr<OperationPass<ModuleOp>> createLowerPrintOpsPass();
 
 bool applyHCLToLLVMLoweringPass(ModuleOp &module, MLIRContext &context);
+bool applyHCLToCoreLoweringPass(ModuleOp &module, MLIRContext &context);
 bool applyFixedPointToInteger(ModuleOp &module);
 bool applyLowerCompositeType(ModuleOp &module);
 bool applyLowerBitOps(ModuleOp &module);

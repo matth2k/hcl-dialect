@@ -82,6 +82,10 @@ static llvm::cl::opt<bool> lowerToLLVM("lower-to-llvm",
                                        llvm::cl::init(false));
 
 static llvm::cl::opt<bool>
+    lowerToCore("lower-to-core", llvm::cl::desc("Lower to Core MLIR Dialects"),
+                llvm::cl::init(false));
+
+static llvm::cl::opt<bool>
     lowerComposite("lower-composite", llvm::cl::desc("Lower composite types"),
                    llvm::cl::init(false));
 
@@ -353,6 +357,11 @@ int main(int argc, char **argv) {
       pm.addPass(mlir::hcl::createRemoveStrideMapPass());
     }
     pm.addPass(mlir::hcl::createHCLToLLVMLoweringPass());
+  }
+
+  if (lowerToCore) {
+    pm.addPass(mlir::createConvertLinalgToAffineLoopsPass());
+    pm.addPass(mlir::hcl::createHCLToCoreLoweringPass());
   }
 
   // Run the pass pipeline
