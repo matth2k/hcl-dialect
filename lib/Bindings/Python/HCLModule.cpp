@@ -109,6 +109,12 @@ static bool lowerHCLToLLVM(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
   return applyHCLToLLVMLoweringPass(mod, *ctx);
 }
 
+static bool lowerHCLToCore(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
+  auto mod = unwrap(mlir_mod);
+  auto ctx = unwrap(mlir_ctx);
+  return applyHCLToCoreLoweringPass(mod, *ctx);
+}
+
 static bool lowerFixedPointToInteger(MlirModule &mlir_mod) {
   auto mod = unwrap(mlir_mod);
   return applyFixedPointToInteger(mod);
@@ -246,6 +252,7 @@ PYBIND11_MODULE(_hcl, m) {
 
   // LLVM backend APIs.
   hcl_m.def("lower_hcl_to_llvm", &lowerHCLToLLVM);
+  hcl_m.def("lower_hcl_to_core", &lowerHCLToCore);
   hcl_m.def("lower_fixed_to_int", &lowerFixedPointToInteger);
   hcl_m.def("lower_anywidth_int", &lowerAnyWidthInteger);
   hcl_m.def("move_return_to_input", &moveReturnToInput);
