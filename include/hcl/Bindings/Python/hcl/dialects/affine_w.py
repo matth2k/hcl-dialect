@@ -5,3 +5,4 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 from ._affine_ops_gen import *
+from ._affine_w_ops_ext import *

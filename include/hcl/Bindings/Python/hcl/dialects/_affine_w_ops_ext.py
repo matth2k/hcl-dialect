@@ -9,15 +9,23 @@ try:
     from ._ods_common import (
         get_op_result_or_value as _get_op_result_or_value,
         get_op_results_or_values as _get_op_results_or_values,
+        get_default_loc_context as _ods_get_default_loc_context,
     )
 except ImportError as e:
     raise RuntimeError("Error loading imports from extension module") from e
 
 from typing import Any, Sequence
+from ._ods_common import _cext as _ods_cext
+from . import _affine_ops_gen as affine_b
 
+_ods_ir = _ods_cext.ir
 
-class AffineForOp:
+class AffineForOp(_ods_ir.OpView):
     """Specialization for the Affine for op class."""
+
+    OPERATION_NAME = "affine.for"
+
+    _ODS_REGIONS = (1, True)
 
     def __init__(
         self,
@@ -49,9 +57,10 @@ class AffineForOp:
         """
         results = [arg.type for arg in iter_args]
         attributes = {}
-        attributes["step"] = step
-        attributes["lower_bound"] = lowerBoundMap
-        attributes["upper_bound"] = upperBoundMap
+        _ods_context = _ods_get_default_loc_context(loc)
+        attributes["step"] = _ods_ir.AttrBuilder.get('IndexAttr')(step, context=_ods_context)
+        attributes["lowerBoundMap"] = lowerBoundMap
+        attributes["upperBoundMap"] = upperBoundMap
         attributes["loop_name"] = name
         if stage != "":
             attributes["op_name"] = stage
@@ -76,6 +85,7 @@ class AffineForOp:
             )
         )
         self.regions[0].blocks.append(IndexType.get(), *results)
+        print(self)
 
     @property
     def body(self):
@@ -95,8 +105,12 @@ class AffineForOp:
         return self.body.arguments[1:]
 
 
-class AffineLoadOp:
+class AffineLoadOp(affine_b.AffineLoadOp):
     """Specialization for the MemRef load operation."""
+
+    OPERATION_NAME = "affine.load"
+
+    _ODS_REGIONS = (0, True)
 
     def __init__(self, memref, indices, map=None, *, loc=None, ip=None):
         memref_resolved = _get_op_result_or_value(memref)
@@ -105,7 +119,11 @@ class AffineLoadOp:
         super().__init__(return_type, memref, indices_resolved, map, loc=loc, ip=ip)
 
 
-class AffineStoreOp:
+class AffineStoreOp(affine_b.AffineStoreOp):
+    OPERATION_NAME = "affine.store"
+
+    _ODS_REGIONS = (0, True)
+
     def __init__(self, value, memref, indices, affine_attr=None, *, loc=None, ip=None):
         operands = []
         results = []
@@ -117,15 +135,7 @@ class AffineStoreOp:
             identity_map = AffineMap.get_identity(len(indices))
             affine_attr = AffineMapAttr.get(identity_map)
         attributes["map"] = affine_attr
-        super().__init__(
-            self.build_generic(
-                attributes=attributes,
-                results=results,
-                operands=operands,
-                loc=loc,
-                ip=ip,
-            )
-        )
+        super().__init__(value, memref, indices, affine_attr, loc=loc, ip=ip)
 
     @property
     def value(self):
@@ -141,10 +151,14 @@ class AffineStoreOp:
         return self.operation.operands[2 : 2 + _ods_variadic_group_length]
 
 
-class AffineIfOp:
+class AffineIfOp(_ods_ir.OpView):
     """
     The affine.if operation contains two regions for the “then” and “else” clauses. affine.if may return results that are defined in its regions. The values defined are determined by which execution path is taken. Each region of the affine.if must contain a single block with no arguments, and be terminated by affine.yield. If affine.if defines no values, the affine.yield can be left out, and will be inserted implicitly. Otherwise, it must be explicit. If no values are defined, the else block may be empty (i.e. contain no blocks).
     """
+
+    OPERATION_NAME = "affine.if"
+
+    _ODS_REGIONS = (2, True)
 
     def __init__(
         self, cond, set_operands, results_=[], *, hasElse=False, loc=None, ip=None
