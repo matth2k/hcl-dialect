@@ -85,7 +85,6 @@ class AffineForOp(_ods_ir.OpView):
             )
         )
         self.regions[0].blocks.append(IndexType.get(), *results)
-        print(self)
 
     @property
     def body(self):
