@@ -300,7 +300,7 @@ hcl::getBoundOfAffineBound(AffineBound bound) {
 
     auto lb = ifOp.getConstantLowerBound();
     auto ub = ifOp.getConstantUpperBound();
-    auto step = ifOp.getStep();
+    auto step = ifOp.getStep().getSExtValue();
 
     lbs.push_back(lb);
     ubs.push_back(ub - 1 - (ub - 1 - lb) % step);

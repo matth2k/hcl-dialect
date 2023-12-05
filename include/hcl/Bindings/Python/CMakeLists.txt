@@ -40,18 +40,27 @@ declare_mlir_dialect_python_bindings(
   DIALECT_NAME hcl
 )
 
-# Only a temporal solution for Affine dialect Python binding
-# Ref: https://github.com/llvm/llvm-project/commit/8c1b785ce110b754c2112906021a929ddd32f587
 declare_mlir_dialect_python_bindings(
   ADD_TO_PARENT HCLMLIRPythonSources.Dialects
   ROOT_DIR "${HCL_MLIR_PYTHON_ROOT_DIR}"
-  #TD_FILE dialects/AffineOps.td
+  TD_FILE dialects/AMCBinding.td
   SOURCES
-    dialects/affine.py
-    dialects/_affine_ops_ext.py
-    dialects/_affine_ops_gen.py
-  DIALECT_NAME affine
+    dialects/amc.py
+  DIALECT_NAME amc
 )
+
+# Only a temporal solution for Affine dialect Python binding
+# Ref: https://github.com/llvm/llvm-project/commit/8c1b785ce110b754c2112906021a929ddd32f587
+# declare_mlir_dialect_python_bindings(
+#   ADD_TO_PARENT HCLMLIRPythonSources.Dialects
+#   ROOT_DIR "${HCL_MLIR_PYTHON_ROOT_DIR}"
+#   #TD_FILE dialects/AffineOps.td
+#   SOURCES
+#     dialects/affine.py
+#     dialects/_affine_ops_ext.py
+#     dialects/_affine_ops_gen.py
+#   DIALECT_NAME affine
+# )
 
 ################################################################################
 # Extensions
@@ -74,6 +83,8 @@ declare_mlir_python_extension(HCLMLIRPythonExtensions.Main
     MLIRPass
     MLIRHCLPasses
     LLVMSupport
+    CIRCTAmcPython
+    CIRCTAmcCAPI
 )
 
 ################################################################################

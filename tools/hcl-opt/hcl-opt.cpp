@@ -24,6 +24,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/Error.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
@@ -277,7 +280,7 @@ int main(int argc, char **argv) {
   // Operation agnostic passes
   mlir::PassManager pm(&context);
   // Operation specific passes
-  mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+  auto optPM = pm.nest<mlir::func::FuncOp>();
   if (enableOpt) {
     pm.addPass(mlir::hcl::createLoopTransformationPass());
   }
@@ -349,8 +352,6 @@ int main(int argc, char **argv) {
     // pm.addPass(mlir::createCSEPass());
   }
 
-  if (applyTransform)
-    pm.addPass(mlir::hcl::createTransformInterpreterPass());
 
   if (runJiT || lowerToLLVM) {
     if (!removeStrideMap) {

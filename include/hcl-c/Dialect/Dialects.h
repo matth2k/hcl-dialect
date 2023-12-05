@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 MLIR_DECLARE_CAPI_DIALECT_REGISTRATION(HCL, hcl);
+MLIR_DECLARE_CAPI_DIALECT_REGISTRATION(AMC, amc);
 
 #ifdef __cplusplus
 }

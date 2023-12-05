@@ -42,8 +42,9 @@ LLVM::LLVMFuncOp getOrInsertPrintf(OpBuilder &rewriter, ModuleOp module) {
   // Create a function declaration for printf, the signature is:
   //   * `i32 (i8*, ...)`
   auto llvmI32Ty = IntegerType::get(context, 32);
-  auto llvmI8PtrTy = LLVM::LLVMPointerType::get(IntegerType::get(context, 8));
-  auto llvmFnType = LLVM::LLVMFunctionType::get(llvmI32Ty, llvmI8PtrTy,
+  // This getter method changed
+  auto llvmI8PtrTy = LLVM::LLVMPointerType::get(context, 0x8);
+  auto llvmFnType = LLVM::LLVMFunctionType::get(llvmI32Ty, {llvmI8PtrTy},
                                                 /*isVarArg=*/true);
 
   // Insert the printf function into the body of the parent module.
@@ -75,10 +76,10 @@ Value getOrCreateGlobalString(Location loc, OpBuilder &builder, StringRef name,
   Value cst0 = builder.create<LLVM::ConstantOp>(
       loc, IntegerType::get(builder.getContext(), 64),
       builder.getIntegerAttr(builder.getIndexType(), 0));
+  SmallVector<Value> indicies({{cst0, cst0}});
   return builder.create<LLVM::GEPOp>(
-      loc,
-      LLVM::LLVMPointerType::get(IntegerType::get(builder.getContext(), 8)),
-      globalPtr, ArrayRef<Value>({cst0, cst0}));
+      loc, LLVM::LLVMPointerType::get(module->getContext(), 0x8),
+      globalPtr.getType(), globalPtr, indicies);
 }
 
 void lowerPrintOpToPrintf(Operation *op, int idx) {

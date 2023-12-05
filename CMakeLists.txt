@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.13.4)
-cmake_policy(SET CMP0116 NEW)
+
+# CMP0116: Ninja generators transform `DEPFILE`s from `add_custom_command()`
+# New in CMake 3.20. https://cmake.org/cmake/help/latest/policy/CMP0116.html
+if(POLICY CMP0116)
+  cmake_policy(SET CMP0116 OLD)
+endif()
 
 project(hcl-dialect LANGUAGES CXX C)
 
@@ -12,8 +17,12 @@ set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
 
 set(CMAKE_BUILD_TYPE Debug)
 
+find_package(AMC REQUIRED CONFIG)
+find_package(CIRCT REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
 
+message(STATUS "Using AMCConfig.cmake in: ${AMC_DIR}")
+message(STATUS "Using CIRCTConfig.cmake in: ${CIRCT_DIR}")
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
@@ -38,6 +47,8 @@ if(OPENSCOP)
   include_directories("${OSL_INCLUDE_DIR}")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${AMC_CMAKE_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${CIRCT_CMAKE_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
 include(TableGen)
@@ -47,6 +58,8 @@ include(HandleLLVMOptions)
 
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${MLIR_INCLUDE_DIRS})
+include_directories(${CIRCT_INCLUDE_DIRS})
+include_directories(${AMC_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_BINARY_DIR}/include)
 link_directories(${LLVM_BUILD_LIBRARY_DIR})

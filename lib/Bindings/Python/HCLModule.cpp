@@ -6,6 +6,7 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 #include "hcl/Bindings/Python/HCLModule.h"
+#include "amc/Bindings/Python/AMCModule.h"
 #include "hcl-c/Dialect/Dialects.h"
 #include "hcl-c/Dialect/HCLAttributes.h"
 #include "hcl-c/Dialect/HCLTypes.h"
@@ -266,4 +267,16 @@ PYBIND11_MODULE(_hcl, m) {
 
   // Utility pass APIs.
   hcl_m.def("memref_dce", &memRefDCE);
+
+  auto amc_m = m.def_submodule("amc");
+  // register dialects
+  amc_m.def(
+      "register_dialect",
+      [](MlirContext context) {
+        MlirDialectHandle amc = mlirGetDialectHandle__amc__();
+        mlirDialectHandleRegisterDialect(amc, context);
+        mlirDialectHandleLoadDialect(amc, context);
+      },
+      py::arg("context") = py::none());
+  populateAMCIRTypes(amc_m);
 }

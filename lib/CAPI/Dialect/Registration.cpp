@@ -16,17 +16,18 @@
 #include "mlir/Dialect/MemRef/Transforms/Passes.h"
 #include "mlir/Transforms/Passes.h"
 
+#include "amc/Dialect/AmcDialect.h"
 #include "hcl/Dialect/HeteroCLDialect.h"
 #include "hcl/Dialect/TransformOps/HCLTransformOps.h"
 #include "mlir/InitAllDialects.h"
 
 void hclMlirRegisterAllDialects(MlirContext context) {
   mlir::DialectRegistry registry;
-  registry.insert<mlir::hcl::HeteroCLDialect, mlir::func::FuncDialect,
-                  mlir::arith::ArithDialect, mlir::tensor::TensorDialect,
-                  mlir::affine::AffineDialect, mlir::math::MathDialect,
-                  mlir::memref::MemRefDialect, mlir::pdl::PDLDialect,
-                  mlir::transform::TransformDialect>();
+  registry.insert<circt::amc::AmcDialect, mlir::hcl::HeteroCLDialect,
+                  mlir::func::FuncDialect, mlir::arith::ArithDialect,
+                  mlir::tensor::TensorDialect, mlir::affine::AffineDialect,
+                  mlir::math::MathDialect, mlir::memref::MemRefDialect,
+                  mlir::pdl::PDLDialect, mlir::transform::TransformDialect>();
   mlir::hcl::registerTransformDialectExtension(registry);
   unwrap(context)->appendDialectRegistry(registry);
   unwrap(context)->loadAllAvailableDialects();

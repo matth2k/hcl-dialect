@@ -20,4 +20,9 @@ add_mlir_public_c_api_library(MLIRHCLCAPI
   MLIRHCLTransformOps
   MLIRHCLPasses
   MLIRHCLConversion
+  CIRCTAmc
+  CIRCTAmcSupport
+  CIRCTCalyx
+  CIRCTCalyxTransforms
+  CIRCTHW
   )
