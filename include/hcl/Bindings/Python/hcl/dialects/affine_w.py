@@ -4,5 +4,5 @@
 #  See https://llvm.org/LICENSE.txt for license information.
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-from ._affine_ops_gen import *
+from ._affine_ops_gen import AffineYieldOp
 from ._affine_w_ops_ext import *

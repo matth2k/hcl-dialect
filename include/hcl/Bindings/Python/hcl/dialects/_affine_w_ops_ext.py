@@ -20,7 +20,8 @@ from . import _affine_ops_gen as affine_b
 
 _ods_ir = _ods_cext.ir
 
-class AffineForOp(_ods_ir.OpView):
+
+class AffineForOp(affine_b.AffineForOp):
     """Specialization for the Affine for op class."""
 
     OPERATION_NAME = "affine.for"
@@ -56,35 +57,24 @@ class AffineForOp(_ods_ir.OpView):
         - `iter_args` is a list of additional loop-carried arguments.
         """
         results = [arg.type for arg in iter_args]
-        attributes = {}
         _ods_context = _ods_get_default_loc_context(loc)
-        attributes["step"] = _ods_ir.AttrBuilder.get('IndexAttr')(step, context=_ods_context)
-        attributes["lowerBoundMap"] = lowerBoundMap
-        attributes["upperBoundMap"] = upperBoundMap
-        attributes["loop_name"] = name
-        if stage != "":
-            attributes["op_name"] = stage
-        if reduction:
-            attributes["reduction"] = reduction
-        if lower_bound == None and upper_bound == None:
-            operands = list(iter_args)
-        elif lower_bound != None and upper_bound == None:
-            operands = [lower_bound] + list(iter_args)
-        elif upper_bound != None and lower_bound == None:
-            operands = [upper_bound] + list(iter_args)
-        else:
-            operands = [lower_bound, upper_bound] + list(iter_args)
         super().__init__(
-            self.build_generic(
-                regions=1,
-                results=results,
-                operands=operands,
-                attributes=attributes,
-                loc=loc,
-                ip=ip,
-            )
+            results_=results,
+            lowerBoundOperands=[lower_bound] if lower_bound is not None else [],
+            upperBoundOperands=[upper_bound] if upper_bound is not None else [],
+            inits=list(iter_args),
+            lowerBoundMap=lowerBoundMap,
+            upperBoundMap=upperBoundMap,
+            step=_ods_ir.AttrBuilder.get("IndexAttr")(int(step), context=_ods_context),
+            loc=loc,
+            ip=ip,
         )
         self.regions[0].blocks.append(IndexType.get(), *results)
+        self.attributes["loop_name"] = name
+        if stage != "":
+            self.attributes["op_name"] = stage
+        if reduction:
+            self.attributes["reduction"] = reduction
 
     @property
     def body(self):
