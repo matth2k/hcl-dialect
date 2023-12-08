@@ -7,6 +7,7 @@
 
 #include "hcl/Bindings/Python/HCLModule.h"
 #include "amc/Bindings/Python/AMCModule.h"
+#include "amc/Transforms/AmcPasses.h"
 #include "hcl-c/Dialect/Dialects.h"
 #include "hcl-c/Dialect/HCLAttributes.h"
 #include "hcl-c/Dialect/HCLTypes.h"
@@ -156,6 +157,18 @@ static bool lowerPrintOps(MlirModule &mlir_mod) {
   return applyLowerPrintOps(mod);
 }
 
+static bool lowerAMCToCalyx(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
+  auto mod = unwrap(mlir_mod);
+  auto ctx = unwrap(mlir_ctx);
+  return circt::amc::applyAmcToCalyxPass(mod, *ctx);
+}
+
+static std::string emitCalyx(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
+  auto mod = unwrap(mlir_mod);
+  auto ctx = unwrap(mlir_ctx);
+  return circt::amc::emitNativeCalyx(mod, *ctx);
+}
+
 //===----------------------------------------------------------------------===//
 // Utility pass APIs
 //===----------------------------------------------------------------------===//
@@ -279,4 +292,6 @@ PYBIND11_MODULE(_hcl, m) {
       },
       py::arg("context") = py::none());
   populateAMCIRTypes(amc_m);
+  amc_m.def("emit_native_calyx", &emitCalyx);
+  amc_m.def("lower_amc_to_calyx", &lowerAMCToCalyx);
 }

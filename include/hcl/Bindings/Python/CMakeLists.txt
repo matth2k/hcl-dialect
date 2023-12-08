@@ -85,6 +85,7 @@ declare_mlir_python_extension(HCLMLIRPythonExtensions.Main
     LLVMSupport
     CIRCTAmcPython
     CIRCTAmcCAPI
+    CIRCTAmcPasses
 )
 
 ################################################################################

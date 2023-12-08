@@ -25,4 +25,5 @@ add_mlir_public_c_api_library(MLIRHCLCAPI
   CIRCTCalyx
   CIRCTCalyxTransforms
   CIRCTHW
+  CIRCTAmcPasses
   )
