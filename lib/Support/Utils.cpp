@@ -11,6 +11,7 @@
 #include "mlir/Dialect/Affine/Utils.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include <cstddef>
 using namespace mlir;
 using namespace hcl;
 
@@ -768,8 +769,10 @@ Value hcl::castIntMemRef(OpBuilder &builder, Location loc,
     newMemRef = builder.create<memref::AllocOp>(loc, newMemRefType);
   }
   // replace all uses
+  // Don't want to change the func signature
+  assert(oldMemRef.getDefiningOp() != nullptr);
   if (replace)
-    oldMemRef.replaceAllUsesWith(newMemRef);
+    oldMemRef.getDefiningOp()->replaceUsesOfWith(oldMemRef, newMemRef);
   // build loop nest
   SmallVector<int64_t, 4> lbs(oldMemRefType.getRank(), 0);
   SmallVector<int64_t, 4> steps(oldMemRefType.getRank(), 1);
