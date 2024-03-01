@@ -43,3 +43,4 @@ build
 
 tmp
 *.pyc
+.cache/
