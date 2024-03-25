@@ -157,10 +157,18 @@ static bool lowerPrintOps(MlirModule &mlir_mod) {
   return applyLowerPrintOps(mod);
 }
 
-static bool lowerAMCToCalyx(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
+static bool lowerAMCToLoopSchedule(MlirModule &mlir_mod,
+                                   MlirContext &mlir_ctx) {
   auto mod = unwrap(mlir_mod);
   auto ctx = unwrap(mlir_ctx);
-  return circt::amc::applyAmcToCalyxPass(mod, *ctx);
+  return circt::amc::applyAmcToLoopSchedulePass(mod, *ctx);
+}
+
+static bool lowerLoopScheduleToCalyx(MlirModule &mlir_mod,
+                                     MlirContext &mlir_ctx) {
+  auto mod = unwrap(mlir_mod);
+  auto ctx = unwrap(mlir_ctx);
+  return circt::amc::applyLoopScheduleToCalyxPass(mod, *ctx);
 }
 
 static std::string emitCalyx(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
@@ -293,5 +301,6 @@ PYBIND11_MODULE(_hcl, m) {
       py::arg("context") = py::none());
   populateAMCIRTypes(amc_m);
   amc_m.def("emit_native_calyx", &emitCalyx);
-  amc_m.def("lower_amc_to_calyx", &lowerAMCToCalyx);
+  amc_m.def("lower_amc_to_loopschedule", &lowerAMCToLoopSchedule);
+  amc_m.def("lower_loopschedule_to_calyx", &lowerLoopScheduleToCalyx);
 }
