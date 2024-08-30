@@ -279,7 +279,9 @@ bool applyHCLToLLVMLoweringPass(ModuleOp &module, MLIRContext &context) {
 
   populateFuncToLLVMConversionPatterns(typeConverter, patterns);
   cf::populateControlFlowToLLVMConversionPatterns(typeConverter, patterns);
-  populateReconcileUnrealizedCastsPatterns(patterns);
+  
+  // UnrealizedCasts pass has been refactored: https://github.com/llvm/llvm-project/pull/95700
+  //   populateReconcileUnrealizedCastsPatterns(patterns);
 
   patterns.add<CreateLoopHandleOpLowering>(&context);
   patterns.add<CreateOpHandleOpLowering>(&context);
