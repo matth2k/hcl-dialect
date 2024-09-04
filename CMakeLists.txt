@@ -17,6 +17,23 @@ set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
 
 set(CMAKE_BUILD_TYPE Debug)
 
+#-------------------------------------------------------------------------------
+# OR-Tools Configuration
+#-------------------------------------------------------------------------------
+
+option(OR_TOOLS_DISABLE "Disable OR-Tools.")
+if (OR_TOOLS_DISABLE)
+  message(STATUS "Disabling OR-Tools.")
+else()
+  if(DEFINED OR_TOOLS_PATH)
+    list(APPEND CMAKE_PREFIX_PATH ${OR_TOOLS_PATH})
+  endif()
+
+  # list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/circt/ext)
+
+  find_package(ortools CONFIG)
+endif()
+
 find_package(AMC REQUIRED CONFIG)
 find_package(CIRCT REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
