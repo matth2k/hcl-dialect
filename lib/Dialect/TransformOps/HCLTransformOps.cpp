@@ -108,7 +108,7 @@ transform::HCLPipelineOp::applyToOne(transform::TransformRewriter &rewriter,
 // Transform op registration
 //===----------------------------------------------------------------------===//
 
-namespace {
+namespace hcl {
 class HCLTransformDialectExtension
     : public transform::TransformDialectExtension<
           HCLTransformDialectExtension> {
@@ -122,7 +122,7 @@ public:
         >();
   }
 };
-} // namespace
+} // namespace hcl
 
 // mlir/lib/Dialect/Transform/IR/TransformOps.cpp
 static ParseResult parseSequenceOpOperands(
@@ -238,5 +238,5 @@ static void printForeachMatchSymbols(OpAsmPrinter &printer, Operation *op,
 #include "hcl/Dialect/TransformOps/HCLTransformOps.cpp.inc"
 
 void mlir::hcl::registerTransformDialectExtension(DialectRegistry &registry) {
-  registry.addExtensions<HCLTransformDialectExtension>();
+  registry.addExtensions<::hcl::HCLTransformDialectExtension>();
 }
