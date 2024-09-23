@@ -157,6 +157,12 @@ static bool lowerPrintOps(MlirModule &mlir_mod) {
   return applyLowerPrintOps(mod);
 }
 
+static bool canonicalizeAMC(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
+  auto mod = unwrap(mlir_mod);
+  auto ctx = unwrap(mlir_ctx);
+  return circt::amc::applyAmcCanonicalization(mod, *ctx);
+}
+
 static bool allocateAMC(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
   auto mod = unwrap(mlir_mod);
   auto ctx = unwrap(mlir_ctx);
@@ -307,6 +313,7 @@ PYBIND11_MODULE(_hcl, m) {
       py::arg("context") = py::none());
   populateAMCIRTypes(amc_m);
   amc_m.def("emit_native_calyx", &emitCalyx);
+  amc_m.def("canonicalize_amc", &canonicalizeAMC);
   amc_m.def("allocate_amc", &allocateAMC);
   amc_m.def("lower_amc_to_loopschedule", &lowerAMCToLoopSchedule);
   amc_m.def("lower_loopschedule_to_calyx", &lowerLoopScheduleToCalyx);
