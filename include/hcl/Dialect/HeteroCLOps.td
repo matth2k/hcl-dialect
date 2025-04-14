@@ -193,7 +193,12 @@ def ApplyOp : HeteroCL_Op<"apply", [CallOpInterface,
 
   // The apply operation takes a symbol reference attribute as the
   // callee, and inputs for the call.
-  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<AnyType>:$inputs);
+  let arguments = (ins FlatSymbolRefAttr:$callee, 
+                       Variadic<AnyType>:$inputs,
+                       TypeAttrOf<FunctionType>:$function_type,
+                       OptionalAttr<StrArrayAttr>:$specifiers,
+                       OptionalAttr<DictArrayAttr>:$arg_attrs,
+                       OptionalAttr<DictArrayAttr>:$res_attrs);
 
   // The apply operation has no results, just a placeholder below.
   let results = (outs Variadic<AnyType>);
@@ -686,7 +691,7 @@ def HeteroCL_ReplaceOp : HeteroCL_Op<"replace">
 def AnyFixed : Type<CPred<"$_self.isa<hcl::FixedType>() || $_self.isa<hcl::UFixedType>()">, "fixed-point",
                     "hcl::AnyFixedType">;
 def FixedLike: TypeConstraint<Or<[AnyFixed.predicate,
-        VectorOf<[AnyFixed]>.predicate, TensorOf<[AnyFixed]>.predicate]>,
+        VectorOfNonZeroRankOf<[AnyFixed]>.predicate, TensorOf<[AnyFixed]>.predicate]>,
     "fixed-point-like">;
 
 class FixedBinaryOp<string mnemonic, list<Trait> traits = []> :

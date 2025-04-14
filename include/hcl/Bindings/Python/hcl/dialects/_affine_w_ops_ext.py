@@ -120,7 +120,7 @@ class AffineStoreOp(affine_b.AffineStoreOp):
         operands.append(memref)
         operands.extend(indices)
         attributes = {}
-        if affine_attr == None:
+        if affine_attr is None:
             identity_map = AffineMap.get_identity(len(indices))
             affine_attr = AffineMapAttr.get(identity_map)
         attributes["map"] = affine_attr
