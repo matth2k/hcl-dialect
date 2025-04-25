@@ -43,11 +43,11 @@ void updateTopFunctionSignature(func::FuncOp &funcOp) {
   SmallVector<Type, 8> new_arg_types;
 
   for (Type t : result_types) {
-    if (MemRefType memrefType = t.dyn_cast<MemRefType>()) {
+    if (MemRefType memrefType = dyn_cast<MemRefType>(t)) {
       Type et = memrefType.getElementType();
       // If result memref element type is integer
       // change it to i64 to be compatible with numpy
-      if (et.isa<IntegerType>()) {
+      if (isa<IntegerType>(et)) {
         size_t width = 64;
         Type newElementType = IntegerType::get(funcOp.getContext(), width);
         new_result_types.push_back(memrefType.clone(newElementType));
@@ -60,11 +60,11 @@ void updateTopFunctionSignature(func::FuncOp &funcOp) {
   }
 
   for (Type t : arg_types) {
-    if (MemRefType memrefType = t.dyn_cast<MemRefType>()) {
+    if (MemRefType memrefType = dyn_cast<MemRefType>(t)) {
       Type et = memrefType.getElementType();
       // If argument memref element type is integer
       // change it to i64 to be compatible with numpy
-      if (et.isa<IntegerType>()) {
+      if (isa<IntegerType>(et)) {
         size_t width = 64;
         Type newElementType = IntegerType::get(funcOp.getContext(), width);
         new_arg_types.push_back(memrefType.clone(newElementType));
@@ -79,11 +79,11 @@ void updateTopFunctionSignature(func::FuncOp &funcOp) {
   // Get signedness hint information
   std::string itypes = "";
   if (funcOp->hasAttr("itypes")) {
-    itypes = funcOp->getAttr("itypes").cast<StringAttr>().getValue().str();
+    itypes = cast<StringAttr>(funcOp->getAttr("itypes")).getValue().str();
   }
   std::string otypes = "";
   if (funcOp->hasAttr("otypes")) {
-    otypes = funcOp->getAttr("otypes").cast<StringAttr>().getValue().str();
+    otypes = cast<StringAttr>(funcOp->getAttr("otypes")).getValue().str();
   }
 
   // Update func::FuncOp's block argument types
@@ -95,13 +95,13 @@ void updateTopFunctionSignature(func::FuncOp &funcOp) {
     for (unsigned i = 0; i < block.getNumArguments(); i++) {
       for (unsigned i = 0; i < block.getNumArguments(); ++i) {
         MemRefType memrefType =
-            block.getArgument(i).getType().dyn_cast<MemRefType>();
+            dyn_cast<MemRefType>(block.getArgument(i).getType());
         if (!memrefType) {
           continue;
         }
 
         Type et = memrefType.getElementType();
-        if (!et.isa<IntegerType>()) {
+        if (!isa<IntegerType>(et)) {
           continue;
         }
 
@@ -117,7 +117,7 @@ void updateTopFunctionSignature(func::FuncOp &funcOp) {
 
         Value newMemRef =
             castIntMemRef(builder, funcOp->getLoc(), block.getArgument(i),
-                          et.cast<IntegerType>().getWidth(), is_unsigned);
+                          cast<IntegerType>(et).getWidth(), is_unsigned);
         newMemRefs.push_back(newMemRef);
         blockArgs.push_back(block.getArgument(i));
       }
@@ -136,9 +136,9 @@ void updateTopFunctionSignature(func::FuncOp &funcOp) {
     // Cast the return values
     for (unsigned i = 0; i < op->getNumOperands(); i++) {
       Value arg = op->getOperand(i);
-      if (MemRefType type = arg.getType().dyn_cast<MemRefType>()) {
+      if (MemRefType type = dyn_cast<MemRefType>(arg.getType())) {
         Type etype = type.getElementType();
-        if (etype.isa<IntegerType>()) {
+        if (isa<IntegerType>(etype)) {
           if (auto allocOp = dyn_cast<memref::AllocOp>(arg.getDefiningOp())) {
             bool is_unsigned = false;
             if (i < otypes.length()) {

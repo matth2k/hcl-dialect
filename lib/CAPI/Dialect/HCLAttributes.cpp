@@ -20,21 +20,21 @@ MlirAttribute mlirIntegerSetAttrGet(MlirIntegerSet set) {
 }
 
 bool mlirAttributeIsAPartitionKind(MlirAttribute attr) {
-  return unwrap(attr).isa<PartitionKindEnumAttr>();
+  return isa<PartitionKindEnumAttr>(unwrap(attr));
 }
 
 MlirAttribute mlirPartitionKindGet(MlirContext ctx, MlirAttribute kind) {
-  IntegerAttr attr = unwrap(kind).cast<IntegerAttr>();
+  IntegerAttr attr = cast<IntegerAttr>(unwrap(kind));
   PartitionKindEnum kindEnum = static_cast<PartitionKindEnum>(attr.getInt());
   return wrap(PartitionKindEnumAttr::get(unwrap(ctx), kindEnum));
 }
 
 bool mlirAttributeIsANDRangeDimKind(MlirAttribute attr) {
-  return unwrap(attr).isa<NDRangeDimKindEnumAttr>();
+  return isa<NDRangeDimKindEnumAttr>(unwrap(attr));
 }
 
 MlirAttribute mlirNDRangeDimKindGet(MlirContext ctx, MlirAttribute kind) {
-  IntegerAttr attr = unwrap(kind).cast<IntegerAttr>();
+  IntegerAttr attr = cast<IntegerAttr>(unwrap(kind));
   NDRangeDimKindEnum kindEnum = static_cast<NDRangeDimKindEnum>(attr.getInt());
   return wrap(NDRangeDimKindEnumAttr::get(unwrap(ctx), kindEnum));
 }

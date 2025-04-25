@@ -71,11 +71,11 @@ LogicalResult CustomizationOp::verify() {
 // Return the type of the same shape (scalar, vector or tensor) containing i1.
 static Type getI1SameShape(Type type) {
   auto i1Type = IntegerType::get(type.getContext(), 1);
-  if (auto tensorType = type.dyn_cast<RankedTensorType>())
+  if (auto tensorType = dyn_cast<RankedTensorType>(type))
     return RankedTensorType::get(tensorType.getShape(), i1Type);
-  if (type.isa<UnrankedTensorType>())
+  if (isa<UnrankedTensorType>(type))
     return UnrankedTensorType::get(i1Type);
-  if (auto vectorType = type.dyn_cast<VectorType>())
+  if (auto vectorType = dyn_cast<VectorType>(type))
     return VectorType::get(vectorType.getShape(), i1Type);
   return i1Type;
 }

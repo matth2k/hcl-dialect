@@ -688,7 +688,7 @@ def HeteroCL_ReplaceOp : HeteroCL_Op<"replace">
 // Fixed-point operations
 //===----------------------------------------------------------------------===//
 
-def AnyFixed : Type<CPred<"$_self.isa<hcl::FixedType>() || $_self.isa<hcl::UFixedType>()">, "fixed-point",
+def AnyFixed : Type<CPred<"isa<hcl::FixedType>($_self) || isa<hcl::UFixedType>($_self)">, "fixed-point",
                     "hcl::AnyFixedType">;
 def FixedLike: TypeConstraint<Or<[AnyFixed.predicate,
         VectorOfNonZeroRankOf<[AnyFixed]>.predicate, TensorOf<[AnyFixed]>.predicate]>,

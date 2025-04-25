@@ -29,19 +29,19 @@ static SmallString<16> getTypeName(Value val) {
   // Handle memref, tensor, and vector types.
   bool BIT_FLAG = false;
   auto valType = val.getType();
-  if (auto arrayType = val.getType().dyn_cast<ShapedType>())
+  if (auto arrayType = dyn_cast<ShapedType>(valType))
     valType = arrayType.getElementType();
 
   // Handle float types.
-  if (valType.isa<Float32Type>())
+  if (isa<Float32Type>(valType))
     return SmallString<16>("float");
-  else if (valType.isa<Float64Type>())
+  else if (isa<Float64Type>(valType))
     return SmallString<16>("double");
 
   // Handle integer types.
-  else if (valType.isa<IndexType>())
+  else if (isa<IndexType>(valType))
     return SmallString<16>("int");
-  else if (auto intType = valType.dyn_cast<IntegerType>()) {
+  else if (auto intType = dyn_cast<IntegerType>(valType)) {
     if (intType.getWidth() == 1) {
       if (!BIT_FLAG)
         return SmallString<16>("bool");
@@ -71,12 +71,12 @@ static SmallString<16> getTypeName(Value val) {
   }
 
   // Handle (custom) fixed point types.
-  else if (auto fixedType = valType.dyn_cast<hcl::FixedType>())
+  else if (auto fixedType = dyn_cast<hcl::FixedType>(valType))
     return SmallString<16>(
         "ac_fixed<" + std::to_string(fixedType.getWidth()) + ", " +
         std::to_string(fixedType.getWidth() - fixedType.getFrac()) + ">");
 
-  else if (auto ufixedType = valType.dyn_cast<hcl::UFixedType>())
+  else if (auto ufixedType = dyn_cast<hcl::UFixedType>(valType))
     return SmallString<16>(
         "ac_ufixed<" + std::to_string(ufixedType.getWidth()) + ", " +
         std::to_string(ufixedType.getWidth() - ufixedType.getFrac()) + ">");
@@ -180,7 +180,7 @@ public:
   /// Affine expression emitters.
   void emitAffineBinary(AffineBinaryOpExpr expr, const char *syntax) {
     os << "(";
-    if (auto constRHS = expr.getRHS().dyn_cast<AffineConstantExpr>()) {
+    if (auto constRHS = dyn_cast<AffineConstantExpr>(expr.getRHS())) {
       if ((unsigned)*syntax == (unsigned)*"*" && constRHS.getValue() == -1) {
         os << "-";
         visit(expr.getLHS());
@@ -195,8 +195,8 @@ public:
         return;
       }
     }
-    if (auto binaryRHS = expr.getRHS().dyn_cast<AffineBinaryOpExpr>()) {
-      if (auto constRHS = binaryRHS.getRHS().dyn_cast<AffineConstantExpr>()) {
+    if (auto binaryRHS = dyn_cast<AffineBinaryOpExpr>(expr.getRHS())) {
+      if (auto constRHS = dyn_cast<AffineConstantExpr>(binaryRHS.getRHS())) {
         if ((unsigned)*syntax == (unsigned)*"+" && constRHS.getValue() == -1 &&
             binaryRHS.getKind() == AffineExprKind::Mul) {
           visit(expr.getLHS());
@@ -374,13 +374,13 @@ void ModuleEmitter::emitValue(Value val, unsigned rank, bool isPtr,
 void ModuleEmitter::emitLoopDirectives(Operation *op) {
   if (auto ii = getLoopDirective(op, "pipeline_ii")) {
     indent();
-    os << "[[intel::initiation_interval(" << ii.cast<IntegerAttr>().getValue()
+    os << "[[intel::initiation_interval(" << cast<IntegerAttr>(ii).getValue()
        << ")]]\n";
   }
 
   if (auto factor = getLoopDirective(op, "unroll")) {
     indent();
-    auto val = factor.cast<IntegerAttr>().getValue();
+    auto val = cast<IntegerAttr>(factor).getValue();
     if (val == 0)
       os << "#pragma unroll\n";
     else
@@ -397,7 +397,7 @@ void ModuleEmitter::emitAffineFor(AffineForOp op) {
   auto iterVar = op.getInductionVar();
   std::string loop_name = "";
   if (op->hasAttr("loop_name")) { // loop label
-    loop_name = op->getAttr("loop_name").cast<StringAttr>().getValue().str();
+    loop_name = cast<StringAttr>(op->getAttr("loop_name")).getValue().str();
     std::replace(loop_name.begin(), loop_name.end(), '.', '_');
   }
   os << "for (";
@@ -479,7 +479,7 @@ template <typename OpType> void ModuleEmitter::emitAlloc(OpType op) {
 
   std::string name;
   if (op->hasAttr("name")) {
-    auto attr = op->getAttr("name").template cast<StringAttr>();
+    auto attr = cast<StringAttr>(op->getAttr("name"));
     name = attr.getValue().str();
   }
 
@@ -500,9 +500,9 @@ void ModuleEmitter::emitLoad(memref::LoadOp op) {
   os << " = ";
   auto memref = op.getMemRef();
   emitValue(memref);
-  auto attr = memref.getType().dyn_cast<MemRefType>().getMemorySpace();
+  auto attr = dyn_cast<MemRefType>(memref.getType()).getMemorySpace();
   if (attr &&
-      attr.cast<StringAttr>().getValue().str().substr(0, 6) == "stream") {
+      cast<StringAttr>(attr).getValue().str().substr(0, 6) == "stream") {
     os << ".read(); // ";
     emitValue(memref); // comment
   }
@@ -519,9 +519,9 @@ void ModuleEmitter::emitStore(memref::StoreOp op) {
   indent();
   auto memref = op.getMemRef();
   emitValue(memref);
-  auto attr = memref.getType().dyn_cast<MemRefType>().getMemorySpace();
+  auto attr = dyn_cast<MemRefType>(memref.getType()).getMemorySpace();
   if (attr &&
-      attr.cast<StringAttr>().getValue().str().substr(0, 6) == "stream") {
+      cast<StringAttr>(attr).getValue().str().substr(0, 6) == "stream") {
     os << ".write(";
     emitValue(op.getValueToStore());
     os << "); // ";
@@ -541,13 +541,13 @@ void ModuleEmitter::emitStore(memref::StoreOp op) {
 void ModuleEmitter::emitArrayDecl(Value array, bool isFunc, std::string name) {
   assert(!isDeclared(array) && "has been declared before.");
 
-  auto arrayType = array.getType().cast<ShapedType>();
+  auto arrayType = cast<ShapedType>(array.getType());
   if (arrayType.hasStaticShape()) {
-    auto memref = array.getType().dyn_cast<MemRefType>();
+    auto memref = dyn_cast<MemRefType>(array.getType());
     if (memref) {
       auto attr = memref.getMemorySpace();
       if (attr &&
-          attr.cast<StringAttr>().getValue().str().substr(0, 6) == "stream") {
+          cast<StringAttr>(attr).getValue().str().substr(0, 6) == "stream") {
         // Value has been declared before or is a constant number.
         if (isDeclared(array)) {
           os << getName(array);
@@ -586,9 +586,9 @@ void ModuleEmitter::emitArrayDecl(Value array, bool isFunc, std::string name) {
 
 void ModuleEmitter::emitBufferDecl(Value array, bool isAccessor,
                                    bool isReadOnly, std::string name) {
-  auto arrayType = array.getType().cast<ShapedType>();
+  auto arrayType = cast<ShapedType>(array.getType());
   assert(arrayType.hasStaticShape());
-  auto memref = array.getType().dyn_cast<MemRefType>();
+  auto memref = dyn_cast<MemRefType>(array.getType());
   assert(memref);
   if (!isAccessor) {
     os << "buffer<";
@@ -618,7 +618,7 @@ void ModuleEmitter::emitBufferDecl(Value array, bool isAccessor,
 unsigned ModuleEmitter::emitNestedLoopHead(Value val) {
   unsigned rank = 0;
 
-  if (auto type = val.getType().dyn_cast<ShapedType>()) {
+  if (auto type = dyn_cast<ShapedType>(val.getType())) {
     if (!type.hasStaticShape()) {
       emitError(val.getDefiningOp(), "is unranked or has dynamic shape.");
       return 0;
@@ -660,7 +660,7 @@ void ModuleEmitter::emitAffineLoad(AffineLoadOp op) {
   indent();
   std::string load_from_name = "";
   if (op->hasAttr("from")) {
-    load_from_name = op->getAttr("from").cast<StringAttr>().getValue().str();
+    load_from_name = cast<StringAttr>(op->getAttr("from")).getValue().str();
   }
   Value result = op.getResult();
   fixUnsignedType(result, op->hasAttr("unsigned"));
@@ -668,16 +668,16 @@ void ModuleEmitter::emitAffineLoad(AffineLoadOp op) {
   os << " = ";
   auto memref = op.getMemRef();
   emitValue(memref, 0, false, load_from_name);
-  auto attr = memref.getType().dyn_cast<MemRefType>().getMemorySpace();
+  auto attr = dyn_cast<MemRefType>(memref.getType()).getMemorySpace();
   if (attr &&
-      attr.cast<StringAttr>().getValue().str().substr(0, 6) == "stream") {
+      cast<StringAttr>(attr).getValue().str().substr(0, 6) == "stream") {
     os << ".read(); // ";
     emitValue(memref, 0, false, load_from_name); // comment
   }
   auto affineMap = op.getAffineMap();
   AffineExprEmitter affineEmitter(state, affineMap.getNumDims(),
                                   op.getMapOperands());
-  auto arrayType = memref.getType().cast<ShapedType>();
+  auto arrayType = cast<ShapedType>(memref.getType());
   if (arrayType.getShape().size() == 1 && arrayType.getShape()[0] == 1) {
     // do nothing;
   } else {
@@ -695,13 +695,13 @@ void ModuleEmitter::emitAffineStore(AffineStoreOp op) {
   indent();
   std::string store_to_name = "";
   if (op->hasAttr("to")) {
-    store_to_name = op->getAttr("to").cast<StringAttr>().getValue().str();
+    store_to_name = cast<StringAttr>(op->getAttr("to")).getValue().str();
   }
   auto memref = op.getMemRef();
   emitValue(memref, 0, false, store_to_name);
-  auto attr = memref.getType().dyn_cast<MemRefType>().getMemorySpace();
+  auto attr = dyn_cast<MemRefType>(memref.getType()).getMemorySpace();
   if (attr &&
-      attr.cast<StringAttr>().getValue().str().substr(0, 6) == "stream") {
+      cast<StringAttr>(attr).getValue().str().substr(0, 6) == "stream") {
     os << ".write(";
     emitValue(op.getValueToStore());
     os << "); // ";
@@ -710,7 +710,7 @@ void ModuleEmitter::emitAffineStore(AffineStoreOp op) {
   auto affineMap = op.getAffineMap();
   AffineExprEmitter affineEmitter(state, affineMap.getNumDims(),
                                   op.getMapOperands());
-  auto arrayType = memref.getType().cast<ShapedType>();
+  auto arrayType = cast<ShapedType>(memref.getType());
   if (arrayType.getShape().size() == 1 && arrayType.getShape()[0] == 1) {
     // do nothing;
   } else {
@@ -889,18 +889,18 @@ void ModuleEmitter::emitConstant(arith::ConstantOp op) {
   if (isDeclared(op.getResult()))
     return;
 
-  if (auto denseAttr = op.getValue().dyn_cast<DenseElementsAttr>()) {
+  if (auto denseAttr = dyn_cast<DenseElementsAttr>(op.getValue())) {
     indent();
     Value result = op.getResult(); // memref
     fixUnsignedType(result, op->hasAttr("unsigned"));
     emitBufferDecl(result);
     os << " = {";
-    auto type = op.getResult().getType().cast<ShapedType>().getElementType();
+    auto type = cast<ShapedType>(op.getResult().getType()).getElementType();
 
     unsigned elementIdx = 0;
     for (auto element : denseAttr.getValues<Attribute>()) {
       if (type.isF32()) {
-        auto value = element.cast<FloatAttr>().getValue().convertToFloat();
+        auto value = cast<FloatAttr>(element).getValue().convertToFloat();
         if (std::isfinite(value))
           os << value;
         else if (value > 0)
@@ -909,7 +909,7 @@ void ModuleEmitter::emitConstant(arith::ConstantOp op) {
           os << "-INFINITY";
 
       } else if (type.isF64()) {
-        auto value = element.cast<FloatAttr>().getValue().convertToDouble();
+        auto value = cast<FloatAttr>(element).getValue().convertToDouble();
         if (std::isfinite(value))
           os << value;
         else if (value > 0)
@@ -918,9 +918,9 @@ void ModuleEmitter::emitConstant(arith::ConstantOp op) {
           os << "-INFINITY";
 
       } else if (type.isInteger(1))
-        os << element.cast<BoolAttr>().getValue();
+        os << cast<BoolAttr>(element).getValue();
       else if (type.isIntOrIndex())
-        os << element.cast<IntegerAttr>().getValue();
+        os << cast<IntegerAttr>(element).getValue();
       else
         emitError(op, "array has unsupported element type.");
 
@@ -959,7 +959,7 @@ void ModuleEmitter::emitBlock(Block &block) {
 void ModuleEmitter::emitInfoAndNewLine(Operation *op) {
   os << "\t//";
   // Print line number.
-  if (auto loc = op->getLoc().dyn_cast<FileLineColLoc>())
+  if (auto loc = dyn_cast<FileLineColLoc>(op->getLoc()))
     os << " L" << loc.getLine();
   os << "\n";
 }
@@ -977,18 +977,18 @@ void ModuleEmitter::emitFunction(func::FuncOp func, bool isAccessor) {
   std::vector<std::string> input_args;
   if (func->hasAttr("inputs")) {
     std::string input_names =
-        func->getAttr("inputs").cast<StringAttr>().getValue().str();
+        cast<StringAttr>(func->getAttr("inputs")).getValue().str();
     input_args = split_names(input_names);
   }
   std::string output_names;
   if (func->hasAttr("outputs")) {
-    output_names = func->getAttr("outputs").cast<StringAttr>().getValue().str();
+    output_names = cast<StringAttr>(func->getAttr("outputs")).getValue().str();
     // suppose only one output
     input_args.push_back(output_names);
   }
   std::string itypes = "";
   if (func->hasAttr("itypes"))
-    itypes = func->getAttr("itypes").cast<StringAttr>().getValue().str();
+    itypes = cast<StringAttr>(func->getAttr("itypes")).getValue().str();
   else {
     for (unsigned i = 0; i < func.getNumArguments(); ++i)
       itypes += "x";
@@ -996,7 +996,7 @@ void ModuleEmitter::emitFunction(func::FuncOp func, bool isAccessor) {
   for (auto &arg : func.getArguments()) {
     indent();
     fixUnsignedType(arg, itypes[argIdx] == 'u');
-    if (arg.getType().isa<ShapedType>()) {
+    if (isa<ShapedType>(arg.getType())) {
       if (input_args.size() == 0) {
         emitBufferDecl(arg, isAccessor, true);
       } else {
@@ -1018,7 +1018,7 @@ void ModuleEmitter::emitFunction(func::FuncOp func, bool isAccessor) {
   auto args = func.getArguments();
   std::string otypes = "";
   if (func->hasAttr("otypes"))
-    otypes = func->getAttr("otypes").cast<StringAttr>().getValue().str();
+    otypes = cast<StringAttr>(func->getAttr("otypes")).getValue().str();
   else {
     for (unsigned i = 0; i < func.getNumArguments(); ++i)
       otypes += "x";
@@ -1033,7 +1033,7 @@ void ModuleEmitter::emitFunction(func::FuncOp func, bool isAccessor) {
         // TODO: a known bug, cannot return a value twice, e.g. return %0, %0
         // : index, index. However, typically this should not happen.
         fixUnsignedType(result, otypes[idx] == 'u');
-        if (result.getType().isa<ShapedType>()) {
+        if (isa<ShapedType>(result.getType())) {
           if (output_names != "")
             emitBufferDecl(result, isAccessor, false);
           else

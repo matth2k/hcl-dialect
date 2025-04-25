@@ -66,9 +66,9 @@ public:
   std::string getName() {
     // check if "op_name" attribute exists
     if (this->op->getAttr("op_name")) {
-      return this->op->getAttr("op_name").cast<StringAttr>().getValue().str();
+      return cast<StringAttr>(this->op->getAttr("op_name")).getValue().str();
     } else if (this->op->getAttr("loop_name")) {
-      return this->op->getAttr("loop_name").cast<StringAttr>().getValue().str();
+      return cast<StringAttr>(this->op->getAttr("loop_name")).getValue().str();
     } else {
       return this->op->getName().getStringRef().str();
     }
@@ -169,9 +169,9 @@ void getAllLoadedMemRefs(Operation *op, std::set<Operation *> &memRefs) {
   for (auto loadOp : loadOps) {
     auto operand = loadOp->getOperand(0);
     // check if operand defining op is a block arg
-    if (operand.isa<BlockArgument>()) {
+    if (isa<BlockArgument>(operand)) {
       // get block arg index
-      unsigned int index = operand.cast<BlockArgument>().getArgNumber();
+      unsigned int index = cast<BlockArgument>(operand).getArgNumber();
       memRefs.insert(reinterpret_cast<Operation *>(index));
     } else {
       memRefs.insert(loadOp->getOperand(0).getDefiningOp());
@@ -192,9 +192,9 @@ void getAllStoredMemRefs(Operation *op, std::set<Operation *> &memRefs) {
   // add memrefs to the set
   for (auto storeOp : storeOps) {
     auto operand = storeOp->getOperand(1);
-    if (operand.isa<BlockArgument>()) {
+    if (isa<BlockArgument>(operand)) {
       // get block arg index
-      unsigned int index = operand.cast<BlockArgument>().getArgNumber();
+      unsigned int index = cast<BlockArgument>(operand).getArgNumber();
       memRefs.insert(reinterpret_cast<Operation *>(index));
     } else {
       memRefs.insert(storeOp->getOperand(1).getDefiningOp());
@@ -291,9 +291,9 @@ bool applyDataPlacement(ModuleOp &module) {
     HostXcelToOp toOp = dyn_cast<HostXcelToOp>(op);
     auto target = toOp.getTarget();
     Operation *target_defining_op;
-    if (target.isa<BlockArgument>()) {
+    if (isa<BlockArgument>(target)) {
       // get block arg index
-      unsigned int index = target.cast<BlockArgument>().getArgNumber();
+      unsigned int index = cast<BlockArgument>(target).getArgNumber();
       target_defining_op = reinterpret_cast<Operation *>(index);
     } else {
       target_defining_op = target.getDefiningOp();
@@ -319,9 +319,7 @@ bool applyDataPlacement(ModuleOp &module) {
       rootForOp.walk([&](Operation *op) {
         if (isa<AffineForOp>(op)) {
           AffineForOp forOp = dyn_cast<AffineForOp>(op);
-          if (forOp.getOperation()
-                  ->getAttr("loop_name")
-                  .cast<StringAttr>()
+          if (cast<StringAttr>(forOp.getOperation()->getAttr("loop_name"))
                   .getValue() == loop_name) {
             axis_op = forOp.getOperation();
           }
@@ -346,7 +344,7 @@ bool applyDataPlacement(ModuleOp &module) {
       }
     } else {
       // if axis is not specified, the memref must be a block argument
-      if (!target.isa<BlockArgument>()) {
+      if (!isa<BlockArgument>(target)) {
         op->emitError(
             "axis is not specified, but the memref is not a block argument");
         return false;

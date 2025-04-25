@@ -47,7 +47,7 @@ transform::HCLParentLoopOp::apply(transform::TransformRewriter &rewriter,
     }
     parents.insert(loop);
   }
-  results.set(getResult().cast<OpResult>(), parents.getArrayRef());
+  results.set(cast<OpResult>(getResult()), parents.getArrayRef());
   return DiagnosedSilenceableFailure::success();
 }
 

@@ -41,10 +41,10 @@ SmallString<8> HCLEmitterBase::getName(Value val) {
     if (auto constOp = dyn_cast<arith::ConstantOp>(defOp)) {
       auto constAttr = constOp.getValue();
 
-      if (auto boolAttr = constAttr.dyn_cast<BoolAttr>()) {
+      if (auto boolAttr = dyn_cast<BoolAttr>(constAttr)) {
         return SmallString<8>(std::to_string(boolAttr.getValue()));
 
-      } else if (auto floatAttr = constAttr.dyn_cast<FloatAttr>()) {
+      } else if (auto floatAttr = dyn_cast<FloatAttr>(constAttr)) {
         auto value = floatAttr.getValueAsDouble();
         if (std::isfinite(value))
           return SmallString<8>(std::to_string(value));
@@ -53,7 +53,7 @@ SmallString<8> HCLEmitterBase::getName(Value val) {
         else
           return SmallString<8>("-INFINITY");
 
-      } else if (auto intAttr = constAttr.dyn_cast<IntegerAttr>()) {
+      } else if (auto intAttr = dyn_cast<IntegerAttr>(constAttr)) {
         auto value = intAttr.getInt();
         return SmallString<8>(std::to_string(value));
       }
@@ -64,19 +64,19 @@ SmallString<8> HCLEmitterBase::getName(Value val) {
 
 void fixUnsignedType(Value &result, bool isUnsigned) {
   if (isUnsigned) { // unsigned type
-    if (result.getType().isa<MemRefType>()) {
-      auto arrayType = result.getType().dyn_cast<MemRefType>();
+    if (isa<MemRefType>(result.getType())) {
+      auto arrayType = dyn_cast<MemRefType>(result.getType());
       Type elt = IntegerType::get(
           arrayType.getContext(),
-          arrayType.getElementType().cast<IntegerType>().getWidth(),
+          cast<IntegerType>(arrayType.getElementType()).getWidth(),
           IntegerType::SignednessSemantics::Unsigned);
       result.setType(MemRefType::get(arrayType.getShape(), elt,
                                      arrayType.getLayout(),
                                      arrayType.getMemorySpace()));
-    } else if (result.getType().isa<IntegerType>()) {
+    } else if (isa<IntegerType>(result.getType())) {
       Type type =
           IntegerType::get(result.getType().getContext(),
-                           result.getType().cast<IntegerType>().getWidth(),
+                           cast<IntegerType>(result.getType()).getWidth(),
                            IntegerType::SignednessSemantics::Unsigned);
       result.setType(type);
     }
@@ -86,19 +86,19 @@ void fixUnsignedType(Value &result, bool isUnsigned) {
 void fixUnsignedType(memref::GlobalOp &op, bool isUnsigned) {
   if (isUnsigned) { // unsigned type
     auto type = op.getTypeAttr().getValue();
-    if (type.isa<MemRefType>()) {
-      auto arrayType = type.dyn_cast<MemRefType>();
+    if (isa<MemRefType>(type)) {
+      auto arrayType = dyn_cast<MemRefType>(type);
       Type elt = IntegerType::get(
           arrayType.getContext(),
-          arrayType.getElementType().cast<IntegerType>().getWidth(),
+          cast<IntegerType>(arrayType.getElementType()).getWidth(),
           IntegerType::SignednessSemantics::Unsigned);
       // get a memref type attr
       op.setTypeAttr(TypeAttr::get(
           MemRefType::get(arrayType.getShape(), elt, arrayType.getLayout(),
                           arrayType.getMemorySpace())));
-    } else if (type.isa<IntegerType>()) {
+    } else if (isa<IntegerType>(type)) {
       Type type = IntegerType::get(type.getContext(),
-                                   type.cast<IntegerType>().getWidth(),
+                                   cast<IntegerType>(type).getWidth(),
                                    IntegerType::SignednessSemantics::Unsigned);
       op.setTypeAttr(TypeAttr::get(type));
     }

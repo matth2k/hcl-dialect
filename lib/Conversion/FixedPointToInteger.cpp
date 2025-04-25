@@ -69,10 +69,10 @@ Value castIntegerWidth(MLIRContext *ctx, OpBuilder &builder, Location loc,
 }
 
 Type convertFixedMemRefOrScalarToInt(Type t, MLIRContext *ctx) {
-  if (MemRefType memrefType = t.dyn_cast<MemRefType>()) {
+  if (MemRefType memrefType = dyn_cast<MemRefType>(t)) {
     // if type is memref
     Type et = memrefType.getElementType();
-    if (et.isa<FixedType, UFixedType>()) {
+    if (isa<FixedType, UFixedType>(et)) {
       // if memref element type is fixed-point
       FixedTypeInfo ti = getFixedPointInfo(et);
       Type newElementType = IntegerType::get(ctx, ti.width);
@@ -84,7 +84,7 @@ Type convertFixedMemRefOrScalarToInt(Type t, MLIRContext *ctx) {
     }
   } else {
     // If type is not memref
-    if (t.isa<FixedType, UFixedType>()) {
+    if (isa<FixedType, UFixedType>(t)) {
       // if type is fixed-point
       FixedTypeInfo ti = getFixedPointInfo(t);
       Type newType = IntegerType::get(ctx, ti.width);
@@ -157,13 +157,13 @@ void updateAffineLoadStore(func::FuncOp &f) {
   for (auto op : loads) {
     for (auto v : llvm::enumerate(op->getResults())) {
       Type newType =
-          op->getOperand(0).getType().cast<MemRefType>().getElementType();
+          cast<MemRefType>(op->getOperand(0).getType()).getElementType();
       op->getResult(v.index()).setType(newType);
     }
   }
   for (auto op : stores) {
     Type newType =
-        op->getOperand(1).getType().cast<MemRefType>().getElementType();
+        cast<MemRefType>(op->getOperand(1).getType()).getElementType();
     op->getOperand(0).setType(newType);
   }
 }
@@ -172,10 +172,10 @@ void updateSelectOp(arith::SelectOp &selectOp) {
   // update the result of select op
   // from fixed-point type to integer type
   Type resType = selectOp.getResult().getType();
-  if (resType.isa<FixedType, UFixedType>()) {
-    int bitwidth = resType.isa<FixedType>()
-                       ? resType.cast<FixedType>().getWidth()
-                       : resType.cast<UFixedType>().getWidth();
+  if (isa<FixedType, UFixedType>(resType)) {
+    int bitwidth = isa<FixedType>(resType)
+                       ? cast<FixedType>(resType).getWidth()
+                       : cast<UFixedType>(resType).getWidth();
     Type newType = IntegerType::get(selectOp.getContext(), bitwidth);
     selectOp.getResult().setType(newType);
   }
@@ -190,10 +190,9 @@ void lowerPrintMemRefOp(func::FuncOp &funcOp) {
   funcOp.walk([&](Operation *op) {
     if (auto new_op = dyn_cast<PrintMemRefOp>(op)) {
       // Only lower fixed-point prints
-      MemRefType memRefType =
-          new_op->getOperand(0).getType().cast<MemRefType>();
+      MemRefType memRefType = cast<MemRefType>(new_op->getOperand(0).getType());
       Type elemType = memRefType.getElementType();
-      if (elemType.isa<FixedType, UFixedType>())
+      if (isa<FixedType, UFixedType>(elemType))
         printOps.push_back(op);
     }
   });
@@ -202,9 +201,9 @@ void lowerPrintMemRefOp(func::FuncOp &funcOp) {
     Type F64 = builder.getF64Type();
     Location loc = printOp->getLoc();
     Value oldMemRef = printOp->getOperand(0);
-    MemRefType oldMemRefType = oldMemRef.getType().cast<MemRefType>();
+    MemRefType oldMemRefType = cast<MemRefType>(oldMemRef.getType());
     Type oldType = oldMemRefType.getElementType();
-    MemRefType newMemRefType = oldMemRefType.clone(F64).cast<MemRefType>();
+    MemRefType newMemRefType = cast<MemRefType>(oldMemRefType.clone(F64));
     Value newMemRef = builder.create<memref::AllocOp>(loc, newMemRefType);
     SmallVector<int64_t, 4> lbs(oldMemRefType.getRank(), 0);
     SmallVector<int64_t, 4> steps(oldMemRefType.getRank(), 1);
@@ -214,12 +213,12 @@ void lowerPrintMemRefOp(func::FuncOp &funcOp) {
           Value v = nestedBuilder.create<AffineLoadOp>(loc, oldMemRef, ivs);
           Value casted;
           size_t frac;
-          if (oldType.isa<FixedType>()) {
+          if (isa<FixedType>(oldType)) {
             casted = nestedBuilder.create<arith::SIToFPOp>(loc, F64, v);
-            frac = oldType.cast<FixedType>().getFrac();
+            frac = cast<FixedType>(oldType).getFrac();
           } else {
             casted = nestedBuilder.create<arith::UIToFPOp>(loc, F64, v);
-            frac = oldType.cast<UFixedType>().getFrac();
+            frac = cast<UFixedType>(oldType).getFrac();
           }
           Value const_frac = nestedBuilder.create<mlir::arith::ConstantOp>(
               loc, F64, nestedBuilder.getFloatAttr(F64, std::pow(2, frac)));
@@ -237,7 +236,7 @@ void lowerPrintOp(func::FuncOp &funcOp) {
     if (auto new_op = dyn_cast<PrintOp>(op)) {
       // Only lower fixed-point prints
       for (auto operand : new_op->getOperands()) {
-        if (operand.getType().isa<FixedType, UFixedType>()) {
+        if (isa<FixedType, UFixedType>(operand.getType())) {
           printOps.push_back(op);
           break;
         }
@@ -247,10 +246,10 @@ void lowerPrintOp(func::FuncOp &funcOp) {
 
   for (auto *printOp : printOps) {
     for (auto opr : llvm::enumerate(printOp->getOperands())) {
-      if (opr.value().getType().isa<FixedType, UFixedType>()) {
+      if (isa<FixedType, UFixedType>(opr.value().getType())) {
         OpBuilder builder(printOp);
         Value oldValue = opr.value();
-        bool is_unsigned = opr.value().getType().isa<UFixedType>();
+        bool is_unsigned = isa<UFixedType>(opr.value().getType());
         Value newValue = castToF64(builder, oldValue, is_unsigned);
         printOp->setOperand(opr.index(), newValue);
       }
@@ -277,20 +276,20 @@ void updateAlloc(func::FuncOp &f) {
 
 void updateSCFIfOp(mlir::scf::IfOp &op) {
   for (auto res : op.getResults()) {
-    if (res.getType().isa<FixedType>()) {
+    if (isa<FixedType>(res.getType())) {
       res.setType(IntegerType::get(res.getContext(),
-                                   res.getType().cast<FixedType>().getWidth()));
-    } else if (res.getType().isa<UFixedType>()) {
-      res.setType(IntegerType::get(
-          res.getContext(), res.getType().cast<UFixedType>().getWidth()));
-    } else if (auto memRefType = res.getType().dyn_cast<MemRefType>()) {
+                                   cast<FixedType>(res.getType()).getWidth()));
+    } else if (isa<UFixedType>(res.getType())) {
+      res.setType(IntegerType::get(res.getContext(),
+                                   cast<UFixedType>(res.getType()).getWidth()));
+    } else if (auto memRefType = dyn_cast<MemRefType>(res.getType())) {
       Type eleTyp = memRefType.getElementType();
-      if (eleTyp.isa<FixedType>()) {
+      if (isa<FixedType>(eleTyp)) {
         eleTyp = IntegerType::get(res.getContext(),
-                                  eleTyp.cast<FixedType>().getWidth());
-      } else if (eleTyp.isa<UFixedType>()) {
+                                  cast<FixedType>(eleTyp).getWidth());
+      } else if (isa<UFixedType>(eleTyp)) {
         eleTyp = IntegerType::get(res.getContext(),
-                                  eleTyp.cast<UFixedType>().getWidth());
+                                  cast<UFixedType>(eleTyp).getWidth());
       }
       res.setType(memRefType.clone(eleTyp));
     }
@@ -498,16 +497,15 @@ void lowerGetGlobalFixedOp(GetGlobalFixedOp &op) {
   // TODO(Niansong): truncate the global memref to the width of the fixed-point
   OpBuilder rewriter(op);
   auto loc = op.getLoc();
-  MemRefType oldType = op->getResult(0).getType().dyn_cast<MemRefType>();
+  MemRefType oldType = dyn_cast<MemRefType>(op->getResult(0).getType());
   Type oldElementType = oldType.getElementType();
   FixedTypeInfo ti = getFixedPointInfo(oldElementType);
   auto memRefType = oldType.clone(IntegerType::get(op.getContext(), 64));
   auto symbolName = op.getName();
   auto res = rewriter.create<memref::GetGlobalOp>(loc, memRefType, symbolName);
   // Truncate or Extend I64 memref to the width of the fixed-point
-  auto castedMemRefType =
-      oldType.clone(IntegerType::get(op.getContext(), ti.width))
-          .cast<MemRefType>();
+  auto castedMemRefType = cast<MemRefType>(
+      oldType.clone(IntegerType::get(op.getContext(), ti.width)));
   auto castedMemRef = rewriter.create<memref::AllocOp>(loc, castedMemRefType);
   SmallVector<int64_t, 4> lbs(oldType.getRank(), 0);
   SmallVector<int64_t, 4> steps(oldType.getRank(), 1);
@@ -527,7 +525,7 @@ void lowerGetGlobalFixedOp(GetGlobalFixedOp &op) {
     if (auto loadOp = dyn_cast<AffineLoadOp>(use.getOwner())) {
       for (auto v : llvm::enumerate(loadOp->getResults())) {
         Type newType =
-            loadOp->getOperand(0).getType().cast<MemRefType>().getElementType();
+            cast<MemRefType>(loadOp->getOperand(0).getType()).getElementType();
         loadOp->getResult(v.index()).setType(newType);
       }
     }
@@ -541,7 +539,7 @@ void lowerFixedToFloat(FixedToFloatOp &op) {
   auto loc = op.getLoc();
   auto src = op.getOperand();
   auto dst = op.getResult();
-  auto dstTy = dst.getType().cast<FloatType>();
+  auto dstTy = cast<FloatType>(dst.getType());
   auto frac = rewriter.create<arith::ConstantOp>(
       loc, dstTy, rewriter.getFloatAttr(dstTy, std::pow(2, ti.frac)));
   if (ti.isSigned) {
@@ -561,7 +559,7 @@ void lowerFloatToFixed(FloatToFixedOp &op) {
   auto src = op.getOperand();
   Type t = op.getResult().getType();
   FixedTypeInfo ti = getFixedPointInfo(t);
-  auto FType = src.getType().cast<FloatType>();
+  auto FType = cast<FloatType>(src.getType());
   auto frac = rewriter.create<arith::ConstantOp>(
       loc, FType, rewriter.getFloatAttr(FType, std::pow(2, ti.frac)));
   auto dstType = IntegerType::get(op.getContext(), ti.width);
@@ -584,7 +582,7 @@ void lowerFixedToInt(FixedToIntOp &op) {
   FixedTypeInfo ti = getFixedPointInfo(t);
   auto src_width = ti.width;
   auto src_frac = ti.frac;
-  auto dstType = dst.getType().cast<IntegerType>();
+  auto dstType = cast<IntegerType>(dst.getType());
   auto srcType = IntegerType::get(op.getContext(), src_width);
   size_t dst_width = dstType.getWidth();
   auto frac = rewriter.create<arith::ConstantOp>(
@@ -621,7 +619,7 @@ void lowerIntToFixed(IntToFixedOp &op) {
   auto dst = op.getResult();
   Type t = dst.getType();
   FixedTypeInfo ti = getFixedPointInfo(t);
-  auto src_width = src.getType().cast<IntegerType>().getWidth();
+  auto src_width = cast<IntegerType>(src.getType()).getWidth();
   auto dst_width = ti.width;
   auto dst_frac = ti.frac;
   auto dstType = IntegerType::get(op.getContext(), dst_width);
@@ -646,11 +644,11 @@ void updateCallOp(func::CallOp &op) {
   llvm::SmallVector<Type, 4> new_arg_types;
   for (auto v : llvm::enumerate(result_types)) {
     Type t = v.value();
-    if (MemRefType memrefType = t.dyn_cast<MemRefType>()) {
+    if (MemRefType memrefType = dyn_cast<MemRefType>(t)) {
       Type et = memrefType.getElementType();
-      if (et.isa<FixedType, UFixedType>()) {
-        size_t width = et.isa<FixedType>() ? et.cast<FixedType>().getWidth()
-                                           : et.cast<UFixedType>().getWidth();
+      if (isa<FixedType, UFixedType>(et)) {
+        size_t width = isa<FixedType>(et) ? cast<FixedType>(et).getWidth()
+                                          : cast<UFixedType>(et).getWidth();
         Type newElementType = IntegerType::get(op.getContext(), width);
         new_result_types.push_back(memrefType.clone(newElementType));
       } else {
@@ -766,7 +764,7 @@ void validateLoweredFunc(func::FuncOp &func) {
       llvm::to_vector<4>(functionType.getResults());
   SmallVector<Type, 8> arg_types = llvm::to_vector<8>(functionType.getInputs());
   for (auto result_type : result_types) {
-    if (result_type.isa<FixedType>() || result_type.isa<UFixedType>()) {
+    if (isa<FixedType>(result_type) || isa<UFixedType>(result_type)) {
       func.emitError(
           "FuncOp: " + func.getName().str() +
           " has fixed-point type result type: " +
@@ -774,7 +772,7 @@ void validateLoweredFunc(func::FuncOp &func) {
     }
   }
   for (auto arg_type : arg_types) {
-    if (arg_type.isa<FixedType>() || arg_type.isa<UFixedType>()) {
+    if (isa<FixedType>(arg_type) || isa<UFixedType>(arg_type)) {
       func.emitError(
           "FuncOp: " + func.getName().str() +
           " has fixed-point type arg type: " +
@@ -788,8 +786,8 @@ void validateLoweredFunc(func::FuncOp &func) {
       // check the result type and arg types of op
       if (op.getNumResults() > 0) {
         for (auto result : op.getResults()) {
-          if (result.getType().isa<FixedType>() ||
-              result.getType().isa<UFixedType>()) {
+          if (isa<FixedType>(result.getType()) ||
+              isa<UFixedType>(result.getType())) {
             op.emitError(
                 "FuncOp: " + func.getName().str() +
                 " has op: " + std::string(op.getName().getStringRef()) +
@@ -801,7 +799,7 @@ void validateLoweredFunc(func::FuncOp &func) {
       }
       // check the arg types of op
       for (auto arg : op.getOperands()) {
-        if (arg.getType().isa<FixedType>() || arg.getType().isa<UFixedType>()) {
+        if (isa<FixedType>(arg.getType()) || isa<UFixedType>(arg.getType())) {
           op.emitError(
               "FuncOp: " + func.getName().str() +
               " has op: " + std::string(op.getName().getStringRef()) +

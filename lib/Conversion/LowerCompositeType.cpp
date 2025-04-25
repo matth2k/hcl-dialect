@@ -119,13 +119,11 @@ void lowerStructType(func::FuncOp &func) {
       if (it == structMemRef2fieldMemRefs.end()) {
         // Create a memref for each field
         OpBuilder builder(struct_memref.getDefiningOp());
-        StructType struct_type = struct_value.getType().cast<StructType>();
+        StructType struct_type = cast<StructType>(struct_value.getType());
 
         for (Type field_type : struct_type.getElementTypes()) {
-          MemRefType newMemRefType = struct_memref.getType()
-                                         .cast<MemRefType>()
-                                         .clone(field_type)
-                                         .cast<MemRefType>();
+          MemRefType newMemRefType = cast<MemRefType>(
+              cast<MemRefType>(struct_memref.getType()).clone(field_type));
           Value field_memref =
               builder.create<memref::AllocOp>(loc, newMemRefType);
           field_memrefs.push_back(field_memref);
@@ -188,8 +186,8 @@ void lowerStructType(func::FuncOp &func) {
 Value buildStructFromInt(OpBuilder &builder, Location loc, Value int_value,
                          StructType struct_type, int lo) {
   SmallVector<Value, 4> struct_elements;
-  for (Type field_type : struct_type.cast<StructType>().getElementTypes()) {
-    if (field_type.isa<IntegerType>()) {
+  for (Type field_type : cast<StructType>(struct_type).getElementTypes()) {
+    if (isa<IntegerType>(field_type)) {
       int field_bitwidth = field_type.getIntOrFloatBitWidth();
       int hi = lo + (field_bitwidth - 1);
       Value hi_idx = builder.create<mlir::arith::ConstantIndexOp>(loc, hi);
@@ -198,9 +196,9 @@ Value buildStructFromInt(OpBuilder &builder, Location loc, Value int_value,
       Value field_value = builder.create<mlir::hcl::GetIntSliceOp>(
           loc, field_type, int_value, hi_idx, lo_idx);
       struct_elements.push_back(field_value);
-    } else if (field_type.isa<StructType>()) {
+    } else if (isa<StructType>(field_type)) {
       struct_elements.push_back(buildStructFromInt(
-          builder, loc, int_value, field_type.cast<StructType>(), lo));
+          builder, loc, int_value, cast<StructType>(field_type), lo));
     } else {
       llvm_unreachable("unexpected type");
     }
@@ -222,7 +220,7 @@ void lowerIntToStructOp(func::FuncOp &func) {
     Value int_value = intToStructOp->getOperand(0);
     Location loc = op->getLoc();
     // Step1: create get_bit op for each field
-    StructType struct_type = struct_value.getType().cast<StructType>();
+    StructType struct_type = cast<StructType>(struct_value.getType());
     OpBuilder builder(op);
     int lo = 0;
     // Step2: create struct construct op

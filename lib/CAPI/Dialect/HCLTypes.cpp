@@ -11,7 +11,7 @@ using namespace mlir;
 using namespace hcl;
 
 bool hclMlirTypeIsALoopHandle(MlirType type) {
-  return unwrap(type).isa<hcl::LoopHandleType>();
+  return isa<hcl::LoopHandleType>(unwrap(type));
 }
 
 MlirType hclMlirLoopHandleTypeGet(MlirContext ctx) {
@@ -19,7 +19,7 @@ MlirType hclMlirLoopHandleTypeGet(MlirContext ctx) {
 }
 
 bool hclMlirTypeIsAOpHandle(MlirType type) {
-  return unwrap(type).isa<hcl::OpHandleType>();
+  return isa<hcl::OpHandleType>(unwrap(type));
 }
 
 MlirType hclMlirOpHandleTypeGet(MlirContext ctx) {
@@ -27,7 +27,7 @@ MlirType hclMlirOpHandleTypeGet(MlirContext ctx) {
 }
 
 bool hclMlirTypeIsAFixedType(MlirType type) {
-  return unwrap(type).isa<hcl::FixedType>();
+  return isa<hcl::FixedType>(unwrap(type));
 }
 
 MlirType hclMlirFixedTypeGet(MlirContext ctx, size_t width, size_t frac) {
@@ -35,15 +35,15 @@ MlirType hclMlirFixedTypeGet(MlirContext ctx, size_t width, size_t frac) {
 }
 
 unsigned hclMlirFixedTypeGetWidth(MlirType type) {
-  return unwrap(type).cast<hcl::FixedType>().getWidth();
+  return cast<hcl::FixedType>(unwrap(type)).getWidth();
 }
 
 unsigned hclMlirFixedTypeGetFrac(MlirType type) {
-  return unwrap(type).cast<hcl::FixedType>().getFrac();
+  return cast<hcl::FixedType>(unwrap(type)).getFrac();
 }
 
 bool hclMlirTypeIsAUFixedType(MlirType type) {
-  return unwrap(type).isa<hcl::UFixedType>();
+  return isa<hcl::UFixedType>(unwrap(type));
 }
 
 MlirType hclMlirUFixedTypeGet(MlirContext ctx, size_t width, size_t frac) {
@@ -51,15 +51,15 @@ MlirType hclMlirUFixedTypeGet(MlirContext ctx, size_t width, size_t frac) {
 }
 
 unsigned hclMlirUFixedTypeGetWidth(MlirType type) {
-  return unwrap(type).cast<hcl::UFixedType>().getWidth();
+  return cast<hcl::UFixedType>(unwrap(type)).getWidth();
 }
 
 unsigned hclMlirUFixedTypeGetFrac(MlirType type) {
-  return unwrap(type).cast<hcl::UFixedType>().getFrac();
+  return cast<hcl::UFixedType>(unwrap(type)).getFrac();
 }
 
 bool hclMlirTypeIsAStructType(MlirType type) {
-  return unwrap(type).isa<hcl::StructType>();
+  return isa<hcl::StructType>(unwrap(type));
 }
 
 MlirType hclMlirStructTypeGet(MlirContext ctx, intptr_t numElements,
@@ -70,9 +70,9 @@ MlirType hclMlirStructTypeGet(MlirContext ctx, intptr_t numElements,
 }
 
 MlirType hclMlirStructGetEleType(MlirType type, size_t pos) {
-  return wrap(unwrap(type).cast<hcl::StructType>().getElementTypes()[pos]);
+  return wrap(cast<hcl::StructType>(unwrap(type)).getElementTypes()[pos]);
 }
 
 unsigned hclMlirStructTypeGetNumFields(MlirType type) {
-  return unwrap(type).cast<hcl::StructType>().getElementTypes().size();
+  return cast<hcl::StructType>(unwrap(type)).getElementTypes().size();
 }

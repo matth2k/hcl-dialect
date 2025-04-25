@@ -90,7 +90,7 @@ void lowerPrintOpToPrintf(Operation *op, int idx) {
   // If the PrintOp has string attribute, it is the format string
   std::string format_str = "%.4f \00";
   if (op->hasAttr("format")) {
-    format_str = op->getAttr("format").cast<StringAttr>().getValue().str();
+    format_str = cast<StringAttr>(op->getAttr("format")).getValue().str();
     bool replaced = true;
     while (replaced) {
       replaced = replace(format_str, "%d", "%.0f");
@@ -98,7 +98,7 @@ void lowerPrintOpToPrintf(Operation *op, int idx) {
   }
   std::string sign_str;
   if (op->hasAttr("signedness")) {
-    sign_str = op->getAttr("signedness").cast<StringAttr>().getValue().str();
+    sign_str = cast<StringAttr>(op->getAttr("signedness")).getValue().str();
   }
   // Get a symbol reference to the printf function, inserting it if
   // necessary. Create global strings for format and new line
@@ -128,17 +128,17 @@ void lowerPrintMemRef(Operation *op) {
   OpBuilder builder(op);
   auto loc = op->getLoc();
   ModuleOp parentModule = op->getParentOfType<ModuleOp>();
-  auto srcMemRefType = op->getOperand(0).getType().cast<MemRefType>();
+  auto srcMemRefType = cast<MemRefType>(op->getOperand(0).getType());
   auto srcElementType = srcMemRefType.getElementType();
   bool unsign = op->hasAttr("unsigned");
   std::string funcName;
-  if (srcElementType.isa<FloatType>() &&
+  if (isa<FloatType>(srcElementType) &&
       srcElementType.getIntOrFloatBitWidth() == 32) {
     funcName = "printMemrefF32";
-  } else if (srcElementType.isa<FloatType>() &&
+  } else if (isa<FloatType>(srcElementType) &&
              srcElementType.getIntOrFloatBitWidth() == 64) {
     funcName = "printMemrefF64";
-  } else if (srcElementType.isa<IntegerType>()) {
+  } else if (isa<IntegerType>(srcElementType)) {
     funcName = "printMemrefI64";
   } else {
     op->emitError("unsupported type for printMemref");
@@ -146,7 +146,7 @@ void lowerPrintMemRef(Operation *op) {
   // For integer memrefs, cast to I64 memref before printing.
   builder.setInsertionPoint(op);
   Value srcMemRef;
-  if (srcElementType.isa<IntegerType>()) {
+  if (isa<IntegerType>(srcElementType)) {
     srcMemRef = castIntMemRef(builder, op->getLoc(), op->getOperand(0), 64,
                               unsign, /*replace*/ false);
     srcElementType = IntegerType::get(builder.getContext(), 64);
