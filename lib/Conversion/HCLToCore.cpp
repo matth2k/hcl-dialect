@@ -251,6 +251,7 @@ bool applyHCLToCoreLoweringPass(ModuleOp &module, MLIRContext &context) {
   target.addLegalDialect<arith::ArithDialect>();
   target.addLegalDialect<memref::MemRefDialect>();
   target.addLegalDialect<BuiltinDialect>();
+  target.addLegalOp<math::AbsFOp>();
 
   // During this lowering, we will also be lowering the MemRef types, that are
   // currently being operated on, to a representation in LLVM. To perform this
@@ -283,8 +284,9 @@ bool applyHCLToCoreLoweringPass(ModuleOp &module, MLIRContext &context) {
 
   //   populateFuncToLLVMConversionPatterns(typeConverter, patterns);
   //   cf::populateControlFlowToLLVMConversionPatterns(typeConverter, patterns);
-  
-  // UnrealizedCasts pass has been refactored: https://github.com/llvm/llvm-project/pull/95700
+
+  // UnrealizedCasts pass has been refactored:
+  // https://github.com/llvm/llvm-project/pull/95700
   //   populateReconcileUnrealizedCastsPatterns(patterns);
 
   patterns.add<CreateLoopHandleOpLowering>(&context);

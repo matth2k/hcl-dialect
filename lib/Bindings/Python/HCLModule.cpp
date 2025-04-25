@@ -7,6 +7,7 @@
 
 #include "hcl/Bindings/Python/HCLModule.h"
 #include "amc/Bindings/Python/AMCModule.h"
+#include "amc/Pipelines/Passes.h"
 #include "amc/Transforms/AmcPasses.h"
 #include "hcl-c/Dialect/Dialects.h"
 #include "hcl-c/Dialect/HCLAttributes.h"
@@ -27,7 +28,6 @@
 #include "mlir/Dialect/PDL/IR/PDLOps.h"
 #include "mlir/Dialect/Transform/Interfaces/TransformInterfaces.h"
 #include "mlir/Pass/PassManager.h"
-#include "amc/Pipelines/Passes.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "mlir/Transforms/Passes.h"
 
@@ -164,7 +164,8 @@ static bool canonicalizeAMC(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
   return circt::amc::applyAmcCanonicalization(mod, *ctx);
 }
 
-static bool frontendMemoryAllocation(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
+static bool frontendMemoryAllocation(MlirModule &mlir_mod,
+                                     MlirContext &mlir_ctx) {
   auto mod = unwrap(mlir_mod);
   auto ctx = unwrap(mlir_ctx);
   return circt::amc::applyFrontendMemoryAllocationPass(mod, *ctx);
@@ -176,11 +177,20 @@ static bool allocateAMC(MlirModule &mlir_mod, MlirContext &mlir_ctx) {
   return circt::amc::applyAmcAllocation(mod, *ctx);
 }
 
-static bool lowerAMCToLoopSchedule(MlirModule &mlir_mod,
-                                   MlirContext &mlir_ctx) {
+static bool lowerAMCToLoopScheduleVivado(MlirModule &mlir_mod,
+                                         MlirContext &mlir_ctx) {
   auto mod = unwrap(mlir_mod);
   auto ctx = unwrap(mlir_ctx);
-  return circt::amc::applyAmcToLoopSchedulePass(mod, *ctx);
+  return circt::amc::applyAmcToLoopSchedulePass(
+      mod, *ctx, circt::amc::OperatorAllocationGenerator::Vivado);
+}
+
+static bool lowerAMCToLoopScheduleDesignWare(MlirModule &mlir_mod,
+                                             MlirContext &mlir_ctx) {
+  auto mod = unwrap(mlir_mod);
+  auto ctx = unwrap(mlir_ctx);
+  return circt::amc::applyAmcToLoopSchedulePass(
+      mod, *ctx, circt::amc::OperatorAllocationGenerator::DesignWare);
 }
 
 static bool lowerLoopScheduleToCalyx(MlirModule &mlir_mod,
@@ -323,6 +333,8 @@ PYBIND11_MODULE(_hcl, m) {
   amc_m.def("canonicalize_amc", &canonicalizeAMC);
   amc_m.def("frontend_memory_allocation", &frontendMemoryAllocation);
   amc_m.def("allocate_amc", &allocateAMC);
-  amc_m.def("lower_amc_to_loopschedule", &lowerAMCToLoopSchedule);
+  amc_m.def("lower_amc_to_loopschedule_vivado", &lowerAMCToLoopScheduleVivado);
+  amc_m.def("lower_amc_to_loopschedule_designware",
+            &lowerAMCToLoopScheduleDesignWare);
   amc_m.def("lower_loopschedule_to_calyx", &lowerLoopScheduleToCalyx);
 }

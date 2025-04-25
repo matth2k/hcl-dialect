@@ -16,6 +16,8 @@
 #include "mlir/Dialect/MemRef/Transforms/Passes.h"
 #include "mlir/Transforms/Passes.h"
 
+#include "circt/InitAllDialects.h"
+
 #include "amc/Dialect/AmcDialect.h"
 #include "hcl/Dialect/HeteroCLDialect.h"
 #include "hcl/Dialect/TransformOps/HCLTransformOps.h"
@@ -29,6 +31,7 @@ void hclMlirRegisterAllDialects(MlirContext context) {
                   mlir::math::MathDialect, mlir::memref::MemRefDialect,
                   mlir::pdl::PDLDialect, mlir::transform::TransformDialect>();
   mlir::hcl::registerTransformDialectExtension(registry);
+  circt::registerAllDialects(registry);
   unwrap(context)->appendDialectRegistry(registry);
   unwrap(context)->loadAllAvailableDialects();
 }
