@@ -5,6 +5,7 @@
 
 #include "hcl/Conversion/Passes.h"
 
+#include "hcl/Dialect/HeteroCLDialect.h"
 #include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
@@ -161,6 +162,19 @@ public:
   }
 };
 
+class BitcastOpLowering : public ConversionPattern {
+public:
+  explicit BitcastOpLowering(MLIRContext *context)
+      : ConversionPattern(hcl::BitcastOp::getOperationName(), 2, context) {}
+  LogicalResult
+  matchAndRewrite(Operation *op, ArrayRef<Value> operands,
+                  ConversionPatternRewriter &rewriter) const override {
+    rewriter.replaceOpWithNewOp<arith::BitcastOp>(
+        op, op->getResultTypes().front(), op->getOperands().front());
+    return success();
+  }
+};
+
 /*
 class SetIntSliceOpLowering : public ConversionPattern {
 public:
@@ -252,6 +266,9 @@ bool applyHCLToCoreLoweringPass(ModuleOp &module, MLIRContext &context) {
   target.addLegalDialect<memref::MemRefDialect>();
   target.addLegalDialect<BuiltinDialect>();
   target.addLegalOp<math::AbsFOp>();
+  target.addLegalOp<math::AbsIOp>();
+  target.addIllegalDialect<hcl::HeteroCLDialect>();
+  target.addIllegalOp<hcl::BitcastOp>();
 
   // During this lowering, we will also be lowering the MemRef types, that are
   // currently being operated on, to a representation in LLVM. To perform this
@@ -295,6 +312,7 @@ bool applyHCLToCoreLoweringPass(ModuleOp &module, MLIRContext &context) {
   patterns.add<GetIntBitOpLowering>(&context);
   //   patterns.add<SetIntSliceOpLowering>(&context);
   patterns.add<GetIntSliceOpLowering>(&context);
+  patterns.add<BitcastOpLowering>(&context);
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.

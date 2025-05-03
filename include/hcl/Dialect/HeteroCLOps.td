@@ -804,6 +804,45 @@ def FixedToFixedOp : HeteroCL_Op<"fixed_to_fixed"> {
   }];
 }
 
+def ShLFixedOp : HeteroCL_Op<"shl_fixed"> {
+  let summary = "fixed point shift left operation";
+  let arguments = (ins
+      FixedLike:$lhs,
+      SignlessIntegerLike:$rhs
+  );
+  let results = (outs FixedLike:$result);
+  let assemblyFormat = [{
+    `(` $lhs `,` $rhs `)` `:` attr-dict `(` type($lhs) `,` type($rhs) `)` `->` type($result)
+  }];
+}
+
+def ShRFixedOp : HeteroCL_Op<"shr_fixed"> {
+  let summary = "fixed point shift right operation";
+  let arguments = (ins
+      FixedLike:$lhs,
+      SignlessIntegerLike:$rhs
+  );
+  let results = (outs FixedLike:$result);
+  let assemblyFormat = [{
+    `(` $lhs `,` $rhs `)` `:` attr-dict `(` type($lhs) `,` type($rhs) `)` `->` type($result)
+  }];
+}
+
+def BitcastOp : HeteroCL_Op<"bitcast"> {
+  let summary = "bitcast between values of equal bit width";
+  let description = [{
+    Bitcast an integer or floating point or fixed point value to an integer or floating point
+    or fixed point value of equal bit width.
+  }];
+  let arguments = (ins AnyType:$input);
+  let results = (outs AnyType:$res);
+
+  let assemblyFormat = [{
+      `(` $input `)` attr-dict `:` type($input) `->` type($res)
+  }];
+  let hasVerifier = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Bitwise operations
 //===----------------------------------------------------------------------===//

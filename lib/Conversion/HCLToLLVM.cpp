@@ -162,6 +162,19 @@ public:
   }
 };
 
+class BitcastOpLowering : public ConversionPattern {
+public:
+  explicit BitcastOpLowering(MLIRContext *context)
+      : ConversionPattern(hcl::BitcastOp::getOperationName(), 2, context) {}
+  LogicalResult
+  matchAndRewrite(Operation *op, ArrayRef<Value> operands,
+                  ConversionPatternRewriter &rewriter) const override {
+    rewriter.replaceOpWithNewOp<arith::BitcastOp>(
+        op, op->getResultTypes().front(), op->getOperands().front());
+    return success();
+  }
+};
+
 /*
 class SetIntSliceOpLowering : public ConversionPattern {
 public:
@@ -279,8 +292,9 @@ bool applyHCLToLLVMLoweringPass(ModuleOp &module, MLIRContext &context) {
 
   populateFuncToLLVMConversionPatterns(typeConverter, patterns);
   cf::populateControlFlowToLLVMConversionPatterns(typeConverter, patterns);
-  
-  // UnrealizedCasts pass has been refactored: https://github.com/llvm/llvm-project/pull/95700
+
+  // UnrealizedCasts pass has been refactored:
+  // https://github.com/llvm/llvm-project/pull/95700
   //   populateReconcileUnrealizedCastsPatterns(patterns);
 
   patterns.add<CreateLoopHandleOpLowering>(&context);
@@ -289,6 +303,7 @@ bool applyHCLToLLVMLoweringPass(ModuleOp &module, MLIRContext &context) {
   patterns.add<GetIntBitOpLowering>(&context);
   //   patterns.add<SetIntSliceOpLowering>(&context);
   patterns.add<GetIntSliceOpLowering>(&context);
+  patterns.add<BitcastOpLowering>(&context);
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.

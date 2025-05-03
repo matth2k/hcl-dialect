@@ -182,7 +182,7 @@ static bool lowerAMCToLoopScheduleVivado(MlirModule &mlir_mod,
   auto mod = unwrap(mlir_mod);
   auto ctx = unwrap(mlir_ctx);
   return circt::amc::applyAmcToLoopSchedulePass(
-      mod, *ctx, circt::amc::OperatorAllocationGenerator::Vivado);
+      mod, *ctx, circt::amc::OperatorAllocationGenerator::Vivado, false);
 }
 
 static bool lowerAMCToLoopScheduleDesignWare(MlirModule &mlir_mod,
@@ -190,7 +190,7 @@ static bool lowerAMCToLoopScheduleDesignWare(MlirModule &mlir_mod,
   auto mod = unwrap(mlir_mod);
   auto ctx = unwrap(mlir_ctx);
   return circt::amc::applyAmcToLoopSchedulePass(
-      mod, *ctx, circt::amc::OperatorAllocationGenerator::DesignWare);
+      mod, *ctx, circt::amc::OperatorAllocationGenerator::DesignWare, true);
 }
 
 static bool lowerLoopScheduleToCalyx(MlirModule &mlir_mod,

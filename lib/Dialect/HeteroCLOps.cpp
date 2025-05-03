@@ -14,13 +14,17 @@
 #include "hcl/Dialect/HeteroCLOps.h"
 #include "hcl/Dialect/HeteroCLDialect.h"
 
+#include "hcl/Dialect/HeteroCLTypes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/BuiltinTypeInterfaces.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/IR/TypeUtilities.h"
 #include "mlir/Interfaces/FunctionImplementation.h"
+#include "llvm/Support/LogicalResult.h"
+#include <optional>
 
 namespace mlir {
 namespace hcl {
@@ -92,6 +96,37 @@ static void buildCmpFixedOp(OpBuilder &build, OperationState &result,
   // mlir::hcl::CmpFixedOp::getPredicateAttrName()’ without object
   // result.addAttribute(CmpFixedOp::getPredicateAttrName(),
   //                     build.getI64IntegerAttr(static_cast<int64_t>(predicate)));
+}
+
+//===----------------------------------------------------------------------===//
+// BitcastOp
+//===----------------------------------------------------------------------===//
+
+static std::optional<unsigned> getBitwidth(mlir::Type type) {
+  if (isa<IntegerType, IndexType, FloatType>(type)) {
+    return type.getIntOrFloatBitWidth();
+  }
+  if (isa<FixedType>(type)) {
+    auto fixedType = cast<FixedType>(type);
+    return fixedType.getWidth();
+  }
+  return std::nullopt;
+}
+
+LogicalResult BitcastOp::verify() {
+  auto inWidth = getBitwidth(getInput().getType());
+  auto outWidth = getBitwidth(getResult().getType());
+
+  if (!inWidth.has_value() || !outWidth.has_value()) {
+    return emitOpError(
+        "Bitcast only supports casting int, float, index, and fixed types");
+  }
+
+  if (*inWidth != *outWidth) {
+    return emitOpError("Casting types of different bitwidth");
+  }
+
+  return success();
 }
 
 } // namespace hcl
