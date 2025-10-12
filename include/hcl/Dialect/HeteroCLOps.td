@@ -86,10 +86,11 @@ def CustomizationOp : HeteroCL_Op<"customization", [
                        TypeAttrOf<FunctionType>:$function_type);
   let regions = (region AnyRegion:$body);
   
-  let builders = [OpBuilder<(ins
-    "StringRef":$name, "FunctionType":$type,
-    CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)
-  >];
+  // let skipDefaultBuilders = 1;
+  // let builders = [OpBuilder<(ins
+  //   "StringRef":$name, "FunctionType":$type,
+  //   CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)
+  // >];
   let extraClassDeclaration = [{
     //===------------------------------------------------------------------===//
     // CallableOpInterface
@@ -209,9 +210,9 @@ def ApplyOp : HeteroCL_Op<"apply", [CallOpInterface,
   }];
 
   // Add custom build methods for the apply operation.
-  let builders = [
-    OpBuilder<(ins "StringRef":$callee, "ArrayRef<Value>":$arguments)>
-  ];
+  // let builders = [
+  //   OpBuilder<(ins "StringRef":$callee, "ArrayRef<Value>":$arguments)>
+  // ];
 
   let extraClassDeclaration = [{
     FunctionType getCalleeType();
@@ -423,10 +424,10 @@ def HeteroCL_PipelineOp : HeteroCL_Op<"pipeline">
     let assemblyFormat = [{
         `(` $loop (`,` $ii^)? `)` attr-dict
     }];
-    let builders = [
-        OpBuilder<(ins "hcl::LoopHandleType":$loop,
-                   CArg<"uint64_t", "1">:$ii)>
-    ];
+    // let builders = [
+    //     OpBuilder<(ins "hcl::LoopHandleType":$loop,
+    //                CArg<"uint64_t", "1">:$ii)>
+    // ];
 }
 
 def HeteroCL_ParallelOp : HeteroCL_Op<"parallel"> 
@@ -466,10 +467,10 @@ def HeteroCL_ThreadBindOp : HeteroCL_Op<"bind">
     let assemblyFormat = [{
         `(` $loop `,` $dim `)` attr-dict
     }];
-    let builders = [
-        OpBuilder<(ins "hcl::LoopHandleType":$loop,
-                   CArg<"uint64_t", "1">:$dim)>
-    ];
+    // let builders = [
+    //     OpBuilder<(ins "hcl::LoopHandleType":$loop,
+    //                CArg<"uint64_t", "1">:$dim)>
+    // ];
 }
 
 def HeteroCL_PartitionOp : HeteroCL_Op<"partition"> 
@@ -1004,9 +1005,9 @@ def StructGetOp : HeteroCL_Op<"struct_get", [NoMemoryEffect]> {
         $input `[` $index `]` attr-dict `:` type($input) `->` type($output)
     }];
 
-    let builders = [
-        OpBuilder<(ins "Value":$input, "size_t":$index)>
-    ];
+    // let builders = [
+    //     OpBuilder<(ins "Value":$input, "size_t":$index)>
+    // ];
 
 }
 

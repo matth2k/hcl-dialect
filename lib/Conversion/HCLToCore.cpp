@@ -293,8 +293,7 @@ bool applyHCLToCoreLoweringPass(ModuleOp &module, MLIRContext &context) {
   arith::populateArithExpandOpsPatterns(patterns);
   //   arith::populateArithToLLVMConversionPatterns(typeConverter, patterns);
 
-  populateExpandCtlzPattern(patterns);
-  populateExpandTanhPattern(patterns);
+  math::populateExpansionPatterns(patterns);
   populateMathAlgebraicSimplificationPatterns(patterns);
   populateMathPolynomialApproximationPatterns(patterns);
   //   populateMathToLLVMConversionPatterns(typeConverter, patterns);

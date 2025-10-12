@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "mlir/Dialect/Affine/Passes.h"
+#include "mlir/Dialect/Bufferization/Transforms/Passes.h"
 #include "mlir/Dialect/Linalg/Passes.h"
+#include "mlir/Dialect/MemRef/Transforms/Passes.h"
 #include "mlir/ExecutionEngine/ExecutionEngine.h"
 #include "mlir/ExecutionEngine/OptUtils.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -38,6 +41,7 @@
 #include "hcl/Conversion/Passes.h"
 #include "hcl/Support/Utils.h"
 #include "hcl/Transforms/Passes.h"
+#include "mlir/Transforms/Passes.h"
 
 #include <iostream>
 
@@ -114,10 +118,6 @@ static llvm::cl::opt<bool> lowerPrintOps("lower-print-ops",
                                          llvm::cl::desc("Lower print ops"),
                                          llvm::cl::init(false));
 
-static llvm::cl::opt<bool> bufferization("bufferization",
-                                         llvm::cl::desc("Bufferization"),
-                                         llvm::cl::init(false));
-
 static llvm::cl::opt<bool> linalgConversion("linalg-to-affine",
                                             llvm::cl::desc("Linalg to affine"),
                                             llvm::cl::init(false));
@@ -161,7 +161,7 @@ static llvm::cl::opt<bool>
 
 int loadMLIR(mlir::MLIRContext &context,
              mlir::OwningOpRef<mlir::ModuleOp> &module) {
-  module = parseSourceFile<mlir::ModuleOp>(inputFilename, &context);
+  module = mlir::parseSourceFile<mlir::ModuleOp>(inputFilename, &context);
   if (!module) {
     llvm::errs() << "Error can't load file " << inputFilename << "\n";
     return 3;
@@ -334,10 +334,6 @@ int main(int argc, char **argv) {
 
   if (foldBitWidth) {
     pm.addPass(mlir::hcl::createFoldBitWidthPass());
-  }
-
-  if (bufferization) {
-    pm.addPass(mlir::bufferization::createOneShotBufferizePass());
   }
 
   if (linalgConversion) {

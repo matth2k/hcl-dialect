@@ -19,6 +19,8 @@ set(LIBS
         MLIRTargetLLVMIRExport
         MLIRIR
         MLIROptLib
+        MLIRRegisterAllDialects
+        MLIRRegisterAllPasses
         MLIRHeteroCL
         MLIRHCLTransformOps
         MLIRHCLConversion

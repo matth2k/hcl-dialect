@@ -44,12 +44,12 @@ void lowerBitReverseOps(func::FuncOp &func) {
     unsigned iwidth = input.getType().getIntOrFloatBitWidth();
     OpBuilder rewriter(bitReverseOp);
     // Create two constants: number of bits, and zero
-    Value const_width_i32 = rewriter.create<mlir::arith::ConstantIntOp>(
-        loc, iwidth - 1, rewriter.getI32Type());
-    Value const_width = rewriter.create<mlir::arith::IndexCastOp>(
-        loc, rewriter.getIndexType(), const_width_i32);
+    Value const_width_i32 =
+        arith::ConstantIntOp::create(rewriter, loc, iwidth - 1, 32);
+    Value const_width = arith::IndexCastOp::create(
+        rewriter, loc, rewriter.getIndexType(), const_width_i32);
     SmallVector<Value> const_0_indices;
-    const_0_indices.push_back(rewriter.create<arith::ConstantIndexOp>(loc, 0));
+    const_0_indices.push_back(arith::ConstantIndexOp::create(rewriter, loc, 0));
 
     // Create a single-element memref to store the result
     MemRefType memRefType = MemRefType::get({1}, input.getType());
@@ -111,7 +111,7 @@ void lowerSetSliceOps(func::FuncOp &func) {
     OpBuilder rewriter(op);
     // Add 1 to hi to make it inclusive
     Type i32 = rewriter.getIntegerType(32);
-    Value one_i32 = rewriter.create<mlir::arith::ConstantIntOp>(loc, 1, i32);
+    Value one_i32 = arith::ConstantIntOp::create(rewriter, loc, 1, 32);
     Value one_idx =
         rewriter.create<mlir::arith::IndexCastOp>(loc, hi.getType(), one_i32);
     Value ub = rewriter.create<mlir::arith::AddIOp>(loc, hi, one_idx);
@@ -123,7 +123,7 @@ void lowerSetSliceOps(func::FuncOp &func) {
     }
 
     // Create a step of 1, index type
-    Value step_i32 = rewriter.create<mlir::arith::ConstantIntOp>(loc, 1, i32);
+    Value step_i32 = arith::ConstantIntOp::create(rewriter, loc, 1, 32);
     Value step =
         rewriter.create<mlir::arith::IndexCastOp>(loc, hi.getType(), step_i32);
 
